@@ -1,0 +1,44 @@
+{
+  "name": "crudy",
+  "version": "0.0.1",
+  "description": "crudy is a tool to create object-based APIs on top of arweave in mere minutes",
+  "main": "src/index.js",
+  "template": {
+    "extends": [
+      "node"
+    ]
+  },
+  "bin": {
+    "crudy": "./src/bin.js"
+  },
+  "scripts": {
+    "test": "mocha -A",
+    "example": "crudy node:$PWD/example.js crudy-crud",
+    "cov": "nyc mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mkg20001/crudy.git"
+  },
+  "keywords": [
+    "rest",
+    "crud",
+    "auth",
+    "generator"
+  ],
+  "author": "Maciej Krüger <mkg20001@gmail.com>",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/mkg20001/crudy/issues"
+  },
+  "homepage": "https://github.com/mkg20001/crudy#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.0.0",
+    "eslint-config-aegir-standalone": "^21.3.0",
+    "eslint-config-oclif": "^3.1.0",
+    "mkgs-tool": "^0.1.8",
+    "mocha": "*",
+    "nyc": "*"
+  }
+}
