@@ -1,6 +1,6 @@
 {
   "name": "celarium",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "celarium is a tool to create CRUD APIs with a tree-structure in mere minutes",
   "main": "src/index.js",
   "template": {
@@ -8,7 +8,10 @@
       "node"
     ]
   },
-  "files": ["example.js", "src/**/*.js"],
+  "files": [
+    "example.js",
+    "src/**/*.js"
+  ],
   "bin": {
     "celarium": "./src/bin.js"
   },
