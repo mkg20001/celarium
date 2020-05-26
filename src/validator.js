@@ -60,8 +60,11 @@ function validator (tree, current, ...parents) {
         attr.typeObj = subType
         attr.typeTree = tree
 
-        /* attr.modify = attr.modify.map(parseAcl)
-        attr.modify.forEach(validateAcl) */
+        attr.append = attr.append.map(parseAcl)
+        attr.append.forEach(validateAcl)
+
+        attr.delete = attr.delete.map(parseAcl)
+        attr.delete.forEach(acl => validateAcl(acl, subType))
 
         if (tree[type]) {
           validator(tree, subType, current, ...parents)
@@ -91,11 +94,8 @@ function validator (tree, current, ...parents) {
         attr.typeObj = subType
         attr.typeTree = tree
 
-        /* attr.append = attr.append.map(parseAcl)
-        attr.append.forEach(validateAcl)
-
-        attr.delete = attr.delete.map(parseAcl)
-        attr.delete.forEach(acl => validateAcl(acl, subType)) */
+        attr.modify = attr.modify.map(parseAcl)
+        attr.modify.forEach(validateAcl)
 
         if (tree[type]) {
           validator(tree, subType, current, ...parents)
