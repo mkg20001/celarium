@@ -91,7 +91,7 @@ async function loadTreeRecursivly (srcStr) {
   contents = value
 
   for (const _import in contents['@imports']) { // eslint-disable-line guard-for-in
-    contents['@imports'][_import] = await loadTreeRecursivly(contents['@imports'][_import])
+    contents['@imports'][_import] = await loadTreeRecursivly(contents['@imports'][_import]) // eslint-disable-line no-await-in-loop
   }
 
   return contents

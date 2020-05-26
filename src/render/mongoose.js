@@ -1,16 +1,10 @@
 'use strict'
 
-const { L, S, Joi } = require('../utils')
-
-function iterateKeys (obj, fnc) {
-  const out = {}
-  Object.keys(obj).forEach(key => (out[key] = fnc(obj, key, obj[key])))
-  return out
-}
+const { L, S, Joi, iterateKeys } = require('../utils')
 
 module.exports = models => {
-  models.forEach(model => {
-    return L(`new mongoose.Schema(${S(iterateKeys(model.attributes, (obj, key, value) => {
+  iterateKeys(models, (modelName, model) => {
+    return L(`new mongoose.Schema(${S(iterateKeys(model.attributes, (key, value) => {
       if (value.isNativeType) {
         return key.typeObj.mongoose.literalParameters(key.typeParameters) // TODO: add .typeParameters
       }
