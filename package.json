@@ -8,6 +8,7 @@
       "node"
     ]
   },
+  "files": ["example.js", "src/**/*.js"],
   "bin": {
     "celarium": "./src/bin.js"
   },
