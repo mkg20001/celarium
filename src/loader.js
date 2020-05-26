@@ -12,49 +12,48 @@ const aclSchema = Joi.object({
   delete: Joi.array().items(Joi.string()).default([])
 })
 
-/* const attributeSchemaBase = { // attr schema base
-  type: Joi.string().required()
+const listSchema = {
+  is: Joi.object({
+    type: Joi.string().pattern(/\[\]$/).required()
+  }).pattern(/./, Joi.any()),
+  then: Joi.object({
+    type: Joi.string().pattern(/\[\]$/).required(),
+    append: Joi.array().items(Joi.string()).default([]),
+    delete: Joi.array().items(Joi.string()).default([])
+  })
 }
-
-const valueAttrSchemaBase = Object.assign({
-  modify: Joi.array().items(Joi.string()).default([]),
-  notNull: Joi.boolean().default(false)
-}, attributeSchemaBase)
-
-const valueAttrSchemaPre = Joi.object(valueAttrSchemaBase).pattern(/./, Joi.any())
-
-const attributeSchemaPre = Joi.object(attributeSchemaBase).pattern(/./, Joi.any())
-
-const listAttrSchema = Joi.object(Object.assign({
-  append: Joi.array().items(Joi.string()).default([]),
-  delete: Joi.array().items(Joi.string()).default([])
-}, attributeSchemaBase))
-
-const attributeSchemaBase = Joi. */
-
-const listSchema = Joi.object({
-  type: Joi.string().pattern(/\[\]$/).required(),
-  append: Joi.array().items(Joi.string()).default([]),
-  delete: Joi.array().items(Joi.string()).default([])
-
-})
 
 const types = require('./types')
 
 const typeSchemas = Object.keys(types).map(type => {
-  return Object.assign({
-    type: Joi.string().valid(type).required(),
-    modify: Joi.array().items(Joi.string()).default([]),
-    notNull: Joi.boolean().default(false)
-  }, types[type].parameters)
+  return {
+    is: Joi.object({
+      type: Joi.string().valid(type).required()
+    }).pattern(/./, Joi.any()),
+
+    then: Object.assign({
+      type: Joi.string().valid(type).required(),
+      modify: Joi.array().items(Joi.string()).default([]),
+      notNull: Joi.boolean().default(false)
+    }, types[type].parameters)
+  }
 })
+
+// TODO: use conditional switch (joi-style)
 
 const attrSchemas = [
   listSchema,
-  ...typeSchemas
+  ...typeSchemas,
+  {
+    otherwise: {
+      type: Joi.string().pattern(/^[a-z0-9]+$/).required(),
+      modify: Joi.array().items(Joi.string()).default([]),
+      notNull: Joi.boolean().default(false)
+    }
+  }
 ]
 
-const attributeSchema = Joi.alternatives().try(...attrSchemas)
+const attributeSchema = Joi.alternatives().conditional(null, { switch: attrSchemas })
 
 const entrySchema = Joi.object({
   acl: Joi.object().pattern(/./, aclSchema),
