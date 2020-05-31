@@ -3,7 +3,7 @@
 const { L, S, Joi, iterateKeys } = require('../utils')
 
 module.exports = models => {
-  iterateKeys(models, (modelName, model) => {
+  return iterateKeys(models, (modelName, model) => {
     return L(`new mongoose.Schema(${S(Object.assign(iterateKeys(model.attributes, (attrName, attr) => {
       if (attr.isNativeType) {
         return attr.typeObj.mongoose.literalParameters(attr.typeParameters) // TODO: add .typeParameters

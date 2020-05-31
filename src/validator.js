@@ -35,6 +35,7 @@ function validator (tree, current, ...parents) {
 
   for (const attrId in current.attributes) { // eslint-disable-line guard-for-in
     const attr = current.attributes[attrId]
+    attr.typeParameters = attr // TODO: cleanup
 
     let match
 

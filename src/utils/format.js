@@ -8,6 +8,7 @@ const fmt = data => {
     case typeof data === 'boolean': return format.boolean(data)
     case typeof data === 'number': return format.number(data)
     case typeof data === 'string': return format.string(data)
+    case typeof data === 'undefined': return 'undefined'
     default: {
       throw new Error(`Cannot convert ${typeof data} ${JSON.stringify(data)}`)
     }

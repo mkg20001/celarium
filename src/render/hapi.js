@@ -5,7 +5,7 @@ const { L, S, Joi, iterateKeys } = require('../utils')
 // const Stack = require('celarium/src/acl/stack')
 
 module.exports = models => {
-  iterateKeys(models, (modelName, model) => {
+  return iterateKeys(models, (modelName, model) => {
     return L(`
       const DBM = mongoose.Model(${modelName})
 
