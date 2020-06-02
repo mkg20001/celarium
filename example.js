@@ -161,5 +161,5 @@ module.exports = {
   },
   '@main': 'board' // this tells the crud api that "board" is the base element. as such it's not allowed to contain any "#" references
 }
-// also noticed how we're not using any time elements? the time is always available via $.createdOn or $.updatedOn, since we're using a blockchain beneath
+
 // sidenote: ## is "previous of previous" in the tree
