@@ -10,11 +10,12 @@ module.exports = async (src, outFolder) => {
   validator(contents)
   console.log(contents)
   console.log(contents.post.attributes)
-  const compiledFiles = compiler(contents, {
+  const compiledFiles = await compiler(contents, {
     db: require('./render/mongoose'),
     api: require('./render/hapi'),
-    base: require('./render/base')
+    base: require('./render/base'),
+    client: require('./render/client')
   })
   console.log(compiledFiles)
-  render(compiledFiles, outFolder)
+  await render(compiledFiles, outFolder)
 }

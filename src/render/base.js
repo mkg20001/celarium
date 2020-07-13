@@ -2,7 +2,7 @@
 
 const { L, S, Joi, iterateKeys } = require('../utils')
 
-module.exports = (config) => {
+module.exports = config => {
   return L(`'use strict'
 
 const { configValidate } = require('celarium/src/include')

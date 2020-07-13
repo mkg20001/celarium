@@ -18,7 +18,7 @@ module.exports = models => {
       }
     }) /* TODO: ACLs */, { parent: L('{ type: mongoose.ObjectID }') }))})`)
   })
-  
+
   return L(`'use strict'
 
 const ABS = require('celarium/src/abstract/mongoose')

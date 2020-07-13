@@ -7,13 +7,13 @@ const { L, S, Joi, iterateKeysToArstr } = require('../utils')
 module.exports = models => {
   const routes = iterateKeysToArstr(models, (modelName, model) => {
     return L(`
-      const DBM = mongoose.Model(${modelName})
+      const ${modelName} = DBM.getModel(${S(modelName)})
 
       server.route('/${modelName}/{id}', {
         method: 'GET',
         // TODO: validate request
         handler: async (h, reply) => {
-          const obj = await DBM.find({ _id: h.params.id })
+          const obj = await DBM.find(${modelName}, h.params.id)
           const stack = Stack(obj, DBM)
           // TODO: validate access control (really important)
           if (accessLog) {
@@ -27,7 +27,7 @@ module.exports = models => {
         method: 'PATCH',
         // TODO: validate request
         handler: async (h, reply) => {
-          const obj = await DBM.find({ _id: h.params.id })
+          const obj = await DBM.find(${modelName}, h.params.id)
           const stack = Stack(obj, DBM)
           // TODO: validate access control (really important)
           // TODO: recursive audit log
@@ -42,7 +42,7 @@ module.exports = models => {
             // TODO: validate request
             // TODO: pagination, filtering...
             handler: async (h, reply) => {
-              const obj = await DBM.find({ _id: h.params.id })
+              const obj = await DBM.find(h.params.id)
               const stack = Stack(obj, DBM)
               // TODO: validate access control (really important)
               if (accessLog) {
@@ -55,7 +55,7 @@ module.exports = models => {
             method: 'POST',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.find({ _id: h.params.id })
+              const obj = await DBM.find(h.params.id)
               const stack = Stack(obj, DBM)
               // TODO: validate access control (really important)
               await DBM.auditLog(getUser(), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
@@ -66,7 +66,7 @@ module.exports = models => {
             method: 'POST',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.find({ _id: h.params.id })
+              const obj = await DBM.find(h.params.id)
               const stack = Stack(obj, DBM)
               // TODO: validate access control (really important)
               // TODO: audit log
@@ -80,7 +80,7 @@ module.exports = models => {
             method: 'POST',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.find({ _id: h.params.id })
+              const obj = await DBM.find(h.params.id)
               // TODO: validate access control (really important)
               // TODO: audit log
               await DBM.auditLog(getUser(), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
