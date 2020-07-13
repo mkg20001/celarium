@@ -23,7 +23,7 @@ const format = {
     const out = ['{']
 
     for (const key in data) { // eslint-disable-line guard-for-in
-      out.push(`${JSON.stringify(key)}: ${fmt(data[key])}`)
+      out.push(`${JSON.stringify(key)}: ${fmt(data[key])},`)
     }
 
     if (out.length === 1) return '{}'

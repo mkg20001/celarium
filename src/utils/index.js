@@ -15,5 +15,10 @@ module.exports = {
     Object.keys(obj).forEach(key => (out[key] = fnc(key, obj[key], obj)))
     return out
   },
+  iterateKeysToArray (obj, fnc) {
+    const out = []
+    Object.keys(obj).forEach(key => (out.push(fnc(key, obj[key], obj))))
+    return out
+  },
   Joi
 }

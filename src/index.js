@@ -12,7 +12,8 @@ module.exports = async (src, outFolder) => {
   console.log(contents.post.attributes)
   const compiledFiles = compiler(contents, {
     db: require('./render/mongoose'),
-    api: require('./render/hapi')
+    api: require('./render/hapi'),
+    base: require('./render/base')
   })
   console.log(compiledFiles)
   render(compiledFiles, outFolder)

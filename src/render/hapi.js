@@ -1,11 +1,11 @@
 'use strict'
 
-const { L, S, Joi, iterateKeys } = require('../utils')
+const { L, S, Joi, iterateKeys, iterateKeysToArray } = require('../utils')
 
 // const Stack = require('celarium/src/acl/stack')
 
 module.exports = models => {
-  return iterateKeys(models, (modelName, model) => {
+  const routes = iterateKeysToArray(models, (modelName, model) => {
     return L(`
       const DBM = mongoose.Model(${modelName})
 
@@ -89,4 +89,23 @@ module.exports = models => {
           `)
       }))}`)
   })
+
+  return L(`'use strict'
+
+const Hapi = require('@hapi/hapi')
+
+module.exports = (config, DBM) => {
+  const server = new Hapi.Server({
+    host: config.host,
+    port: config.port
+  })
+
+  ${S(routes)}
+
+  return {
+    start: () => server.start(),
+    stop: () => server.stop(),
+    _hapi: hapi
+  }
+}`)
 }
