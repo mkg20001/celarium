@@ -20,5 +20,10 @@ module.exports = {
     Object.keys(obj).forEach(key => (out.push(fnc(key, obj[key], obj))))
     return out
   },
+  iterateKeysToArstr (obj, fnc) {
+    const out = []
+    Object.keys(obj).forEach(key => (out.push(fnc(key, obj[key], obj))))
+    return { _literal: true, _value: out.map(v => v._literal ? v._value : stringify(v)).join('\n') }
+  },
   Joi
 }

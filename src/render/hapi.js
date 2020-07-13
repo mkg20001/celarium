@@ -1,11 +1,11 @@
 'use strict'
 
-const { L, S, Joi, iterateKeys, iterateKeysToArray } = require('../utils')
+const { L, S, Joi, iterateKeysToArstr } = require('../utils')
 
 // const Stack = require('celarium/src/acl/stack')
 
 module.exports = models => {
-  const routes = iterateKeysToArray(models, (modelName, model) => {
+  const routes = iterateKeysToArstr(models, (modelName, model) => {
     return L(`
       const DBM = mongoose.Model(${modelName})
 
@@ -34,7 +34,7 @@ module.exports = models => {
         }
       })
 
-      ${S(iterateKeys(model.attributes, (attrName, attr) => {
+      ${S(iterateKeysToArstr(model.attributes, (attrName, attr) => {
         if (attr.isList) {
           return L(`
           server.route('/${modelName}/{id}/${attrName}', { // this gets all the objects in a list, with pagination etc...

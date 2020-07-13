@@ -1,9 +1,9 @@
 'use strict'
 
-const { L, S, Joi, iterateKeys, iterateKeysToArray } = require('../utils')
+const { L, S, Joi, iterateKeys, iterateKeysToArstr } = require('../utils')
 
 module.exports = models => {
-  const schemas = iterateKeysToArray(models, (modelName, model) => {
+  const schemas = iterateKeysToArstr(models, (modelName, model) => {
     return L(`new mongoose.Schema(${S(Object.assign(iterateKeys(model.attributes, (attrName, attr) => {
       if (attr.isNativeType) {
         return attr.typeObj.mongoose.literalParameters(attr.typeParameters) // TODO: add .typeParameters
