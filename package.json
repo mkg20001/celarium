@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "template": {
     "extends": [
-      "node"
+      "node",
+      "eslint"
     ]
   },
   "files": [
@@ -17,8 +18,13 @@
   },
   "scripts": {
     "test": "mocha -A",
-    "example": "celarium node:$PWD/example.js",
-    "cov": "nyc mocha"
+    "prep": "sh -c 'if [ ! -e node_modules/celarium ]; then ln -sf .. node_modules/celarium; fi'",
+    "example": "node src/bin.js node:$PWD/example.js $PWD/out",
+    "try": "npm run prep && npm run example && node out/test.js",
+    "_example": "celarium node:$PWD/example.js /tmp",
+    "cov": "nyc mocha",
+    "lint": "eslint .",
+    "fix": "eslint --fix ."
   },
   "repository": {
     "type": "git",
@@ -40,11 +46,12 @@
     "@hapi/joi": "^17.1.1"
   },
   "devDependencies": {
-    "eslint": "^7.0.0",
-    "eslint-config-aegir-standalone": "^21.3.0",
-    "eslint-config-oclif": "^3.1.0",
-    "mkgs-tool": "^0.1.8",
+    "eslint": "*",
+    "eslint-config-aegir-standalone": "*",
+    "eslint-config-oclif": "*",
+    "mkgs-tool": "^0.1.9",
     "mocha": "*",
+    "mongoose": "^5.9.23",
     "nyc": "*"
   }
 }

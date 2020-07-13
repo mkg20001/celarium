@@ -13,7 +13,7 @@ function matcher (mUser) {
   }
 }
 
-async function resolveAclRef ({ wildcard, not, mode, depth, type, name }, stack, getObj) {
+async function resolveAclRef ({ wildcard, not, mode, depth, type, name }, stack) {
   if (wildcard) {
     return {
       wildcard: true,
@@ -74,7 +74,7 @@ async function resolveAclRef ({ wildcard, not, mode, depth, type, name }, stack,
 async function resolveAclRefs (target, listName, stack) {
   const list = getList(target, listName)
   // const acl = dba.getAclLists(obj, model)
-  const res = await Promise.all(list.map(entry => resolveAclRef(entry, stack, getObj)))
+  const res = await Promise.all(list.map(entry => resolveAclRef(entry, stack)))
   return res.reduce((out, el) => (out.concat(Array.isArray(el) ? el : [el])), []) // flatten
 }
 
