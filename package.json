@@ -52,6 +52,7 @@
     "mkgs-tool": "^0.1.9",
     "mocha": "*",
     "mongoose": "^5.9.23",
+    "node-fetch": "^2.6.0",
     "nyc": "*"
   }
 }
