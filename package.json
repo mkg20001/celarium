@@ -43,12 +43,15 @@
   },
   "homepage": "https://github.com/mkg20001/celarium#readme",
   "dependencies": {
-    "@hapi/joi": "^17.1.1"
+    "@hapi/joi": "^17.1.1",
+    "fake-joi": "^0.1.0"
   },
   "devDependencies": {
+    "@hapi/hapi": "^19.1.1",
     "eslint": "*",
     "eslint-config-aegir-standalone": "*",
     "eslint-config-oclif": "*",
+    "hapi-pino": "^8.0.1",
     "mkgs-tool": "^0.1.9",
     "mocha": "*",
     "mongoose": "^5.9.23",

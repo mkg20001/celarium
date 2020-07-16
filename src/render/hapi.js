@@ -9,8 +9,9 @@ module.exports = models => {
     return L(`
       const ${modelName} = DBM.getModel(${S(modelName)})
 
-      server.route('/${modelName}/{id}', {
+      server.route({
         method: 'GET',
+        path: '/${modelName}/{id}',
         // TODO: validate request
         handler: async (h, reply) => {
           const obj = await DBM.find(${modelName}, h.params.id)
@@ -23,8 +24,9 @@ module.exports = models => {
         }
       })
 
-      server.route('/${modelName}/{id}', { // modify the object (should do all the checks per-key - should lists be modifiable here (append)? prob not...)
+      server.route({ // modify the object (should do all the checks per-key - should lists be modifiable here (append)? prob not...)
         method: 'PATCH',
+        path: '/${modelName}/{id}',
         // TODO: validate request
         handler: async (h, reply) => {
           const obj = await DBM.find(${modelName}, h.params.id)
@@ -37,8 +39,9 @@ module.exports = models => {
       ${S(iterateKeysToArstr(model.attributes, (attrName, attr) => {
         if (attr.isList) {
           return L(`
-          server.route('/${modelName}/{id}/${attrName}', { // this gets all the objects in a list, with pagination etc...
+          server.route({ // this gets all the objects in a list, with pagination etc...
             method: 'GET',
+            path: '/${modelName}/{id}/${attrName}',
             // TODO: validate request
             // TODO: pagination, filtering...
             handler: async (h, reply) => {
@@ -51,8 +54,9 @@ module.exports = models => {
             }
           })
 
-          server.route('/${modelName}/{id}/${attrName}/append', { // this accepts either an object to create (for non-sym) or an id to append (for sym). for non-sym parent is set to the current object id
+          server.route({ // this accepts either an object to create (for non-sym) or an id to append (for sym). for non-sym parent is set to the current object id
             method: 'POST',
+            path: '/${modelName}/{id}/${attrName}/append',
             // TODO: validate request
             handler: async (h, reply) => {
               const obj = await DBM.find(h.params.id)
@@ -62,8 +66,9 @@ module.exports = models => {
             }
           })
 
-          server.route('/${modelName}/{id}/${attrName}/remove', { // this accepts an id to remove. for non-sym it also removes the object from db (or rather disassociates it ala soft-delete - but we should leave this to the user FIXME)
+          server.route({ // this accepts an id to remove. for non-sym it also removes the object from db (or rather disassociates it ala soft-delete - but we should leave this to the user FIXME)
             method: 'POST',
+            path: '/${modelName}/{id}/${attrName}/remove',
             // TODO: validate request
             handler: async (h, reply) => {
               const obj = await DBM.find(h.params.id)
@@ -76,8 +81,9 @@ module.exports = models => {
           `)
         }
           return L(`
-          server.route('/${modelName}/{id}/${attrName}', { // this accepts a new value for a key
+          server.route({ // this accepts a new value for a key
             method: 'POST',
+            path: '/${modelName}/{id}/${attrName}',
             // TODO: validate request
             handler: async (h, reply) => {
               const obj = await DBM.find(h.params.id)
@@ -105,7 +111,7 @@ module.exports = (config, DBM) => {
   return {
     start: () => server.start(),
     stop: () => server.stop(),
-    _hapi: hapi
+    _hapi: server
   }
 }`)
 }

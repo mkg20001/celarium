@@ -13,6 +13,13 @@ const def = {
 async function main () {
   const { API: api, DBM: db, start, stop } = await (require('./base')(def))
 
+  const { _hapi: server } = api
+
+  await server.register({
+    plugin: require('hapi-pino'),
+    options: { name: 'celarium-test' }
+  })
+
   await api.start()
 }
 

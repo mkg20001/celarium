@@ -3,8 +3,8 @@
 const { L, S, Joi, iterateKeys, iterateKeysToArstr } = require('../utils')
 
 module.exports = models => {
-  const schemas = iterateKeysToArstr(models, (modelName, model) => {
-    return L(`new mongoose.Schema(${S(Object.assign(iterateKeys(model.attributes, (attrName, attr) => {
+  const mModels = iterateKeysToArstr(models, (modelName, model) => {
+    const schema = L(`new mongoose.Schema(${S(Object.assign(iterateKeys(model.attributes, (attrName, attr) => {
       if (attr.isNativeType) {
         return attr.typeObj.mongoose.literalParameters(attr.typeParameters) // TODO: add .typeParameters
       }
@@ -14,9 +14,11 @@ module.exports = models => {
           return L(`{ type: Array, item: ${S(attr.typeObj.mongoose.literalParameters(attr.typeParameters))} }`)
         }
 
-        return L('{ type: Array, item: mongoose.ObjectID }') // TODO: db relations
+        return L('{ type: Array, item: mongoose.ObjectId }') // TODO: db relations
       }
-    }) /* TODO: ACLs */, { parent: L('{ type: mongoose.ObjectID }') }))})`)
+    }) /* TODO: ACLs */, { parent: L('{ type: mongoose.ObjectId }') }))})`)
+
+    return L(`mongoose.model(${S(modelName)}, ${S(schema)})`)
   })
 
   return L(`'use strict'
@@ -25,7 +27,7 @@ const ABS = require('celarium/src/abstract/mongoose')
 const mongoose = require('mongoose')
 
 module.exports = (dbConfig) => {
-  ${S(schemas)}
+  ${S(mModels)}
 
   return ABS(dbConfig)
 }`)
