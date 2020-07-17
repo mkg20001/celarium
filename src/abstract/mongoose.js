@@ -15,7 +15,7 @@ module.exports = config => {
   }
 
   return {
-    getModel: async modelName => mongoose.Model(modelName),
+    getModel: async modelName => mongoose.model(modelName),
     get: async (model, id) => {
       return model.findOne({ _id: id })
     },
@@ -36,6 +36,16 @@ module.exports = config => {
         const res = await obj.save()
         return res._id
       }
+    },
+
+    connect: () => {
+      return mongoose.connect(config.url, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      })
+    },
+    disconnect: () => {
+      return mongoose.disconnect()
     }
   }
 }

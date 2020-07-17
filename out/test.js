@@ -3,7 +3,7 @@
 const def = {
   api: {
     host: '127.0.0.1',
-    port: 3344
+    port: 7452
   },
   db: {
     url: 'mongodb://localhost:27017/testcelarium'
@@ -20,7 +20,15 @@ async function main () {
     options: { name: 'celarium-test' }
   })
 
-  await api.start()
+  await start()
+
+  process.on('SIGINT', () => {
+    stop()
+  })
+
+  process.on('SIGTERM', () => {
+    stop()
+  })
 }
 
 main().then(console.log, console.error)
