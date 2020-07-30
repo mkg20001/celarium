@@ -1,11 +1,15 @@
 'use strict'
 
-module.exports = (baseObj, dbm, cache = { [id]: baseObj }, next) => {
+module.exports = (baseObj, dbm, cache = { [baseObj.id]: baseObj }, next) => {
   const dCache = [baseObj]
 
-  const _dbmFetch = async id => {
+  const _dbmFetch = async (model, id) => {
+    if (!id) {
+      throw new Error('Invalid id... inverse-stack-overflow')
+    }
+
     if (!cache[id]) {
-      cache[id] = dbm.fetch(id)
+      cache[id] = dbm.get(model, id)
       cache[id] = await cache[id]
     }
 
@@ -20,7 +24,7 @@ module.exports = (baseObj, dbm, cache = { [id]: baseObj }, next) => {
         await _fetch(depth - 1)
       }
 
-      dCache[depth] = _dbmFetch(dCache[depth - 1].parent)
+      dCache[depth] = _dbmFetch(dCache[depth - 1].parent.model, dCache[depth - 1].parent.id)
       dCache[depth] = await dCache[depth]
     }
 

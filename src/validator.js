@@ -33,6 +33,13 @@ function validator (tree, current, ...parents) {
     })
   }
 
+  if (!current.read) {
+    current.read = []
+  }
+
+  current.read = current.read.map(parseAcl)
+  current.read.forEach(validateAcl)
+
   for (const attrId in current.attributes) { // eslint-disable-line guard-for-in
     const attr = current.attributes[attrId]
     attr.typeParameters = attr // TODO: cleanup

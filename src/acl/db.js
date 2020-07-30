@@ -1,5 +1,9 @@
 'use strict'
 
+/* eslint-disable max-params */
+
+const Stack = require('./stack')
+
 function matcher (mUser) {
   /*
   2 = exclude
@@ -13,7 +17,7 @@ function matcher (mUser) {
   }
 }
 
-async function resolveAclRef ({ wildcard, not, mode, depth, type, name }, stack) {
+async function resolveAclRef (aclBase, { wildcard, not, mode, depth, type, name }, stack) {
   if (wildcard) {
     return {
       wildcard: true,
@@ -63,7 +67,7 @@ async function resolveAclRef ({ wildcard, not, mode, depth, type, name }, stack)
       return targetObj.props[name]
     }
     case 'acl': {
-      return resolveAclRefs(targetObj, name, newStack)
+      return resolveAclRefs(aclBase, targetObj, targetObj.model, name, newStack)
     }
     default: {
       throw new TypeError(type)
@@ -71,22 +75,77 @@ async function resolveAclRef ({ wildcard, not, mode, depth, type, name }, stack)
   }
 }
 
-async function resolveAclRefs (target, listName, stack) {
-  const list = getList(target, listName)
-  // const acl = dba.getAclLists(obj, model)
-  const res = await Promise.all(list.map(entry => resolveAclRef(entry, stack)))
+async function recursiveResolve (aclBase, list, stack) {
+  const res = await Promise.all(list.map(entry => resolveAclRef(aclBase, entry, stack)))
   return res.reduce((out, el) => (out.concat(Array.isArray(el) ? el : [el])), []) // flatten
 }
 
-module.exports = dba => {
+function resolveAclRefs (aclBase, targetObj, modelName, listName, stack) {
+  const list = getListAclsFor(aclBase, targetObj, modelName, listName, stack)
+  // const acl = dba.getAclLists(obj, model)
+  return recursiveResolve(aclBase, list, stack)
+}
+
+function getPropertyAclsFor (aclBase, modelName, attrName, action) {
+  console.log(aclBase, modelName, attrName, action)
+  const attr = aclBase[modelName] && aclBase[modelName].attrs[attrName]
+  console.log('foundAttr', attr)
+
+  if (!attr) return false
+
+  if (action === 'access') {
+    action = 'read' // TODO: single terminology
+  }
+
+  console.log((attr[action] || []).concat(aclBase[modelName].base[action]))
+
+  return (attr[action] || []).concat(aclBase[modelName].base[action])
+}
+
+function getListAclsFor (aclBase, targetObj, stack, modelName, listName) {
+  const list = aclBase[modelName] && aclBase[modelName].lists[listName]
+
+  if (!list) {
+    return false
+  }
+
+  /*
+
+  -fixed:
+    - always add those
+  - initial:
+    - these have been added at creation, so are in db now
+  - append / delete:
+    - these are important for acl changes, so also irrelevant
+
+  */
+
+  return list.fixed.concat(targetObj.acl[listName] || [])
+}
+
+module.exports = (DBM, aclBase) => {
   return {
-    validateAcl: (obj, model, modelConfig, user) => {
-      const res = resolveAclRefs(listName, stack)
+    /* validateAcl: (obj, model, user) => {
+      const res = resolveAclRefs(obj, listName, Stack(obj, DBM))
+      /*
+      2 = exclude
+      1 = include
+      0 = no match
+      *
+      return res.map(matcher(user)).reduce((a, b) => a > b ? a : b, 0)
+    } */
+    async validateAcls (obj, user, modelName, model, attrName, action, listAction, listNextId) {
+      const stack = Stack(obj, DBM, null, listNextId)
+      const base = getPropertyAclsFor(aclBase, obj, modelName, attrName, action || listAction)
+
+      const res = await recursiveResolve(aclBase, base, stack)
+
       /*
       2 = exclude
       1 = include
       0 = no match
       */
+
       return res.map(matcher(user)).reduce((a, b) => a > b ? a : b, 0)
     }
   }

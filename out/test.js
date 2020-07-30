@@ -3,7 +3,8 @@
 const def = {
   api: {
     host: '127.0.0.1',
-    port: 7452
+    port: 7452,
+    getUser: () => 1
   },
   db: {
     url: 'mongodb://localhost:27017/testcelarium'
@@ -21,6 +22,13 @@ async function main () {
   })
 
   await start()
+
+  const root = await db.makeElement(await db.getModel('board'), {
+    name: 'Burd', // Board written wrong intentionally
+    description: 'The Test Burd'
+  })
+
+  console.log(root)
 
   process.on('SIGINT', () => {
     stop()

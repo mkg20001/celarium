@@ -4,10 +4,12 @@ const { L, S, Joi, iterateKeysToArstr } = require('../utils')
 
 // const Stack = require('celarium/src/acl/stack')
 
-module.exports = models => {
+module.exports = (models, config) => {
   const routes = iterateKeysToArstr(models, (modelName, model) => {
     return L(`
-      const ${modelName} = DBM.getModel(${S(modelName)})
+      const ${modelName} = await DBM.getModel(${S(modelName)})
+
+      // TODO: log acl violations
 
       server.route({
         method: 'GET',
@@ -15,12 +17,18 @@ module.exports = models => {
         // TODO: validate request
         handler: async (h, reply) => {
           const obj = await DBM.get(${modelName}, h.params.id)
-          const stack = Stack(obj, DBM)
-          // TODO: validate access control (really important)
-          if (accessLog) {
-            // TODO: recursivly for every key?!
-            await DBM.auditLog(getUser(), ${S(modelName)}, "access", h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
+
+          for (const key in obj) {
+            // (obj, user, modelName, model, attrName, action, listAction, listNextId)
+            if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, key, 'access')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+              delete obj[key]
+            } else if (accessLog) {
+              // await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
+              await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, key) // (user, model, type, object, targetKey, operation, parameter)
+            }
           }
+
+          return obj
         }
       })
 
@@ -30,9 +38,21 @@ module.exports = models => {
         // TODO: validate request
         handler: async (h, reply) => {
           const obj = await DBM.get(${modelName}, h.params.id)
-          const stack = Stack(obj, DBM)
-          // TODO: validate access control (really important)
-          // TODO: recursive audit log
+
+          const {payload} = h
+
+          for (const key in payload) {
+            // (obj, user, modelName, model, attrName, action, listAction, listNextId)
+            if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, key, 'modify')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+              throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
+            }
+          }
+
+          for (const key in payload) {
+            await DBM.set(obj, key, payload[key])
+          }
+
+          return {ok: true}
         }
       })
 
@@ -45,11 +65,13 @@ module.exports = models => {
             // TODO: validate request
             // TODO: pagination, filtering...
             handler: async (h, reply) => {
-              const obj = await DBM.get(h.params.id)
+              const obj = await DBM.get(${modelName}, h.params.id)
+
               const stack = Stack(obj, DBM)
               // TODO: validate access control (really important)
+
               if (accessLog) {
-                await DBM.auditLog(getUser(), ${S(modelName)}, "access", h.params.id, ${S(attrName)}, null, null) // (user, model, type, object, targetKey, operation, parameter)
+                await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}, null, null) // (user, model, type, object, targetKey, operation, parameter)
               }
             }
           })
@@ -59,10 +81,14 @@ module.exports = models => {
             path: '/${modelName}/{id}/${attrName}/append',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.get(h.params.id)
-              const stack = Stack(obj, DBM)
-              // TODO: validate access control (really important)
-              await DBM.auditLog(getUser(), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
+              const obj = await DBM.get(${modelName}, h.params.id)
+
+              // (obj, user, modelName, model, attrName, action, listAction, listNextId)
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, null, 'append')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+                throw Boom.unauthorized()
+              }
+
+              await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
             }
           })
 
@@ -71,25 +97,59 @@ module.exports = models => {
             path: '/${modelName}/{id}/${attrName}/remove',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.get(h.params.id)
-              const stack = Stack(obj, DBM)
+              const obj = await DBM.get(${modelName}, h.params.id)
+
+              const rId = h.payload
+
+              // (obj, user, modelName, model, attrName, action, listAction, listNextId)
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, null, 'remove', rId)) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+                throw Boom.unauthorized()
+              }
+
               // TODO: validate access control (really important)
               // TODO: audit log
-              await DBM.auditLog(getUser(), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", oldId) // (user, model, type, object, targetKey, operation, parameter)
+              await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
             }
           })
           `)
         }
-          return L(`
+
+        return L(`
+          server.route({ // this gets the value for a key
+            method: 'GET',
+            path: '/${modelName}/{id}/${attrName}',
+            // TODO: validate request
+            handler: async (h, reply) => {
+              const obj = await DBM.get(${modelName}, h.params.id)
+
+              // (obj, user, modelName, model, attrName, action, listAction, listNextId)
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, 'access')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+                throw Boom.unauthorized()
+              }
+
+              await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
+
+              return obj[${S(attrName)}]
+            }
+          })
+
           server.route({ // this accepts a new value for a key
             method: 'POST',
             path: '/${modelName}/{id}/${attrName}',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.get(h.params.id)
-              // TODO: validate access control (really important)
-              // TODO: audit log
-              await DBM.auditLog(getUser(), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
+              const obj = await DBM.get(${modelName}, h.params.id)
+
+              // (obj, user, modelName, model, attrName, action, listAction, listNextId)
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, 'modify')) {
+                throw Boom.unauthorized()
+              }
+
+              await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
+
+              await DBM.set(obj, ${S(attrName)}, h.payload)
+
+              return {ok: true}
             }
           })
           `)
@@ -99,12 +159,18 @@ module.exports = models => {
   return L(`'use strict'
 
 const Hapi = require('@hapi/hapi')
+const Boom = require('@hapi/boom')
+const ACL = require('./acl')
 
-module.exports = (config, DBM) => {
+module.exports = async (config, DBM) => {
+  const {validateAcls} = ACL(DBM)
+
   const server = new Hapi.Server({
     host: config.host,
     port: config.port
   })
+
+  const getUser = config.getUser
 
   ${S(routes)}
 
