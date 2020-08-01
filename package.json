@@ -48,14 +48,14 @@
     "fake-joi": "^0.1.0"
   },
   "devDependencies": {
-    "@hapi/hapi": "^19.1.1",
+    "@hapi/hapi": "^19.2.0",
     "eslint": "*",
     "eslint-config-aegir-standalone": "*",
     "eslint-config-oclif": "*",
     "hapi-pino": "^8.0.1",
     "mkgs-tool": "^0.1.9",
     "mocha": "*",
-    "mongoose": "^5.9.23",
+    "mongoose": "^5.9.26",
     "node-fetch": "^2.6.0",
     "nyc": "*"
   }
