@@ -5,5 +5,15 @@
   ],
   "rules": {
     "no-await-in-loop": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "test/**/*.js"
+      ],
+      "env": {
+        "mocha": true
+      }
+    }
+  ]
 }
