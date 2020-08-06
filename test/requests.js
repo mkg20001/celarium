@@ -26,7 +26,8 @@ describe('requests', () => {
       stubDb = await generated.load('db')()
       api = await generated.load('api')({
         host: '::',
-        port: 7788
+        port: 7788,
+        getUser: h => 1
       }, stubDb)
 
       hapi = api._hapi
@@ -39,7 +40,7 @@ describe('requests', () => {
 
       before(async () => {
         el = stubDb.makeElement(await stubDb.getModel('board'), {
-          name: 'test',
+          name: 'Test',
           description: 'test'
         })
       })
@@ -49,7 +50,9 @@ describe('requests', () => {
           method: 'get',
           url: `/board/${el.id}`
         })
+
         expect(res.statusCode).to.equal(200)
+        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('Test')
       })
     })
 

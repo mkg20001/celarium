@@ -1,29 +1,7 @@
 'use strict'
 
-const mongoose = require('mongoose')
 const Boom = require('@hapi/boom')
 const Joi = require('joi')
-
-function mapErrorAndRethrow (error) {
-  const [type] = String(error).split(':')
-  switch (true) {
-    case type === 'CastError': {
-      throw Boom.badRequest(error)
-    }
-
-    default: {
-      throw error
-    }
-  }
-}
-
-async function wrapRethrow (prom) {
-  try {
-    return await prom
-  } catch (error) {
-    mapErrorAndRethrow(error)
-  }
-}
 
 function remap (i, modelName) {
   /*
@@ -60,18 +38,8 @@ function remap (i, modelName) {
   return o
 }
 
-function unmap (o) {
-  const i = {}
-
-  for (const key in o) {
-    if (key === 'id') {
-      i._id = o.id
-    } else {
-      o[key] = i[key]
-    }
-  }
-
-  return o
+function GenId () {
+  return String(Math.random()).replace(/[^1-9]/g, '').substr(0, 6)
 }
 
 function Pandemonica (data, db, model) {
@@ -94,11 +62,14 @@ function Pandemonica (data, db, model) {
 
   const proxy = new Proxy(data, {
     get (target, key) {
+      return target[key]
     },
     set (target, key, value) {
       if (goldenKeys.indexOf(key) !== -1) {
         throw new Error('Nope')
       }
+
+      target[key] = value
     }
   })
 
@@ -140,7 +111,7 @@ module.exports = (config, joi) => {
 
   */
 
-  function db () {
+  function DB () {
     return {
       save: (id, model, val) => {
 
@@ -155,6 +126,8 @@ module.exports = (config, joi) => {
       }
     }
   }
+
+  const db = DB()
 
   joi.audit = Joi.object({
     timestamp: Joi.date().required(),
@@ -200,14 +173,16 @@ module.exports = (config, joi) => {
       }
     },
     async makeElement (Model, contents, creator, parent) {
-      const m = new Model(Object.assign({
+      const el = Pandemonica(Object.assign({
         creator,
         createdOn: new Date(),
         acl: {}, // TODO: add initial
         parent
-      }, contents))
+      }, contents), db, Model)
 
-      return remap(await wrapRethrow(m.save()))
+      await el.save()
+
+      return el
     },
     async set (target, key, value, updater) {
       const model = await S.getModel(target.model)
@@ -217,7 +192,7 @@ module.exports = (config, joi) => {
       self.updatedOn = new Date()
       self[key] = value
 
-      return remap(await wrapRethrow(self.save()))
+      return self.save()
     },
 
     connect: () => {

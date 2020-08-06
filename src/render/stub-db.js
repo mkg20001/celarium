@@ -44,6 +44,6 @@ module.exports = models => {
 const ABS = require('celarium/src/abstract/stub-db')
 
 module.exports = (dbConfig) => {
-  return ABS(dbConfig, require('./joi'))
+  return ABS(dbConfig, require('./joi')())
 }`)
 }
