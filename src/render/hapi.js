@@ -49,7 +49,7 @@ module.exports = (models, config) => {
           }
 
           for (const key in payload) {
-            await DBM.set(obj, key, payload[key])
+            await DBM.set(obj, key, payload[key], getUser(h))
           }
 
           return {ok: true}
@@ -58,6 +58,8 @@ module.exports = (models, config) => {
 
       ${S(iterateKeysToArstr(model.attributes, (attrName, attr) => {
         if (attr.isList) {
+          const subType = attr.typeName // we already have that loaded somewhere else, so no need to pull again
+
           return L(`
           server.route({ // this gets all the objects in a list, with pagination etc...
             method: 'GET',
@@ -67,8 +69,11 @@ module.exports = (models, config) => {
             handler: async (h, reply) => {
               const obj = await DBM.get(${modelName}, h.params.id)
 
-              const stack = Stack(obj, DBM)
-              // TODO: validate access control (really important)
+              // TODO: access, etc per key
+
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, key, null, 'modify', "todo")) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+                throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
+              }
 
               if (accessLog) {
                 await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}, null, null) // (user, model, type, object, targetKey, operation, parameter)
@@ -88,6 +93,15 @@ module.exports = (models, config) => {
                 throw Boom.unauthorized()
               }
 
+              const {payload} = h
+
+              // if:symbolic = payload should be id, added to list
+              // if:non-symbolic = payload should be object, created with this as parent, added to list
+
+              // non-symbolic
+              const newId = makeElement (${modelName}, payload, getUser(h), h.params.id)
+              await DBM.set(obj, ${S(attrName)}, obj[${S(attrName)}].concat([newId]), getUser(h))
+
               await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
             }
           })
@@ -98,6 +112,7 @@ module.exports = (models, config) => {
             // TODO: validate request
             handler: async (h, reply) => {
               const obj = await DBM.get(${modelName}, h.params.id)
+              const rObj = await DBM.get(${subType}, h.params.id)
 
               const rId = h.payload
 
@@ -106,9 +121,10 @@ module.exports = (models, config) => {
                 throw Boom.unauthorized()
               }
 
-              // TODO: validate access control (really important)
-              // TODO: audit log
               await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
+
+              await DBM.set(rObj, 'parent', null, getUser(h)) // if not-symbolic
+              await DBM.set(obj, ${S(attrName)}, obj[${S(attrName)}].filter(id => id !== rId))
             }
           })
           `)
@@ -147,7 +163,7 @@ module.exports = (models, config) => {
 
               await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
 
-              await DBM.set(obj, ${S(attrName)}, h.payload)
+              await DBM.set(obj, ${S(attrName)}, h.payload, getUser(h))
 
               return {ok: true}
             }
@@ -164,6 +180,7 @@ const ACL = require('./acl')
 
 module.exports = async (config, DBM) => {
   const {validateAcls} = ACL(DBM)
+  const accessLog = false // TODO: make configurable?
 
   const server = new Hapi.Server({
     host: config.host,

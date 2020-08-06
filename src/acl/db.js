@@ -135,6 +135,8 @@ module.exports = (DBM, aclBase) => {
       return res.map(matcher(user)).reduce((a, b) => a > b ? a : b, 0)
     } */
     async validateAcls (obj, user, modelName, model, attrName, action, listAction, listNextId) {
+      return true // TODO: implement later
+
       const stack = Stack(obj, DBM, null, listNextId)
       const base = getPropertyAclsFor(aclBase, obj, modelName, attrName, action || listAction)
 
