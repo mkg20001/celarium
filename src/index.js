@@ -10,9 +10,6 @@ module.exports = async (src, outFolder, config = { api: 'hapi', db: 'mongoose', 
 
   validator(contents)
 
-  console.log(contents)
-  console.log(contents.post.attributes)
-
   const compiledFiles = await compiler(contents, {
     acl: require('./render/acl'),
     db: require('./render/' + config.db),
@@ -24,3 +21,5 @@ module.exports = async (src, outFolder, config = { api: 'hapi', db: 'mongoose', 
 
   await render(compiledFiles, outFolder)
 }
+
+module.exports.jit = require('./jit')
