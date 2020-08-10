@@ -47,7 +47,9 @@
     "@hapi/joi": "^17.1.1",
     "chai": "^4.2.0",
     "fake-joi": "^0.1.0",
-    "joi": "^17.1.1"
+    "joi": "^17.1.1",
+    "mkdirp": "^1.0.4",
+    "rimraf": "^3.0.2"
   },
   "devDependencies": {
     "@hapi/hapi": "^19.2.0",
