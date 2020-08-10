@@ -34,6 +34,7 @@ module.exports = (TMPDIR = os.tmpdir()) => {
     if (!a[1].jacked && a[1].id.startsWith(TMPDIR)) {
       a[1].jacked = true
       a[1].paths.push(MODDIR)
+      module.paths.forEach(p => a[1].paths.push(p))
     }
 
     return load(...a)
