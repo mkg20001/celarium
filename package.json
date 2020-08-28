@@ -63,6 +63,7 @@
     "mongoose": "^5.9.27",
     "node-fetch": "^2.6.0",
     "nyc": "*",
-    "pino-pretty": "^4.1.0"
+    "pino-pretty": "^4.1.0",
+    "whatwg-fetch": "^3.4.0"
   }
 }
