@@ -17,7 +17,7 @@
   },
   "scripts": {
     "start": "nodemon -i out -x \"npm run try | pino-pretty\"",
-    "watch-n-test": "DEBUG=cel* nodemon -i out -x \"npm test\"",
+    "watch-n-test": "DEBUG=cel* nodemon -i out -x \"npm test -- -c | pino-pretty\"",
     "test": "mocha -A",
     "prep": "sh -c 'if [ ! -e node_modules/celarium ]; then ln -sf .. node_modules/celarium; fi'",
     "example": "node src/bin.js node:$PWD/example.js $PWD/out",
@@ -61,6 +61,7 @@
     "mocha": "*",
     "mongoose": "^5.9.27",
     "node-fetch": "^2.6.0",
-    "nyc": "*"
+    "nyc": "*",
+    "pino-pretty": "^4.1.0"
   }
 }
