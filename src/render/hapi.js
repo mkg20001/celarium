@@ -6,9 +6,15 @@ const { L, S, Joi, iterateKeysToArstr } = require('../utils')
 
 module.exports = (models, config) => {
   const routes = iterateKeysToArstr(models, (modelName, model) => {
-    return L(`
-      const ${modelName} = await DBM.getModel(${S(modelName)})
+    const route = (method, path, options, handler) => {
+      return L(`server.route(${S(Object.assign({
+        method,
+        path,
+        handler
+      }, options))})`)
+    }
 
+    return L(`
       // TODO: log acl violations
 
       server.route({
@@ -16,7 +22,7 @@ module.exports = (models, config) => {
         path: '/${modelName}/{id}',
         // TODO: validate request
         handler: async (h, reply) => {
-          const obj = await DBM.get(${modelName}, h.params.id)
+          const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
           for (const key in obj) {
             // (obj, user, modelName, model, attrName, action, listAction, listNextId)
@@ -37,7 +43,7 @@ module.exports = (models, config) => {
         path: '/${modelName}/{id}',
         // TODO: validate request
         handler: async (h, reply) => {
-          const obj = await DBM.get(${modelName}, h.params.id)
+          const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
           const {payload} = h
 
@@ -67,7 +73,7 @@ module.exports = (models, config) => {
             // TODO: validate request
             // TODO: pagination, filtering...
             handler: async (h, reply) => {
-              const obj = await DBM.get(${modelName}, h.params.id)
+              const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
               // TODO: access, etc per key
 
@@ -86,7 +92,7 @@ module.exports = (models, config) => {
             path: '/${modelName}/{id}/${attrName}/append',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.get(${modelName}, h.params.id)
+              const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
               // (obj, user, modelName, model, attrName, action, listAction, listNextId)
               if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, null, 'append')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
@@ -111,10 +117,9 @@ module.exports = (models, config) => {
             path: '/${modelName}/{id}/${attrName}/remove',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.get(${modelName}, h.params.id)
-              const rObj = await DBM.get(${subType}, h.params.id)
-
+              const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
               const rId = h.payload
+              const rObj = await DBM.getById(${S(subType)}, rId)
 
               // (obj, user, modelName, model, attrName, action, listAction, listNextId)
               if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, null, 'remove', rId)) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
@@ -123,12 +128,16 @@ module.exports = (models, config) => {
 
               await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
 
-              await DBM.set(rObj, 'parent', null, getUser(h)) // if not-symbolic
-              await DBM.set(obj, ${S(attrName)}, obj[${S(attrName)}].filter(id => id !== rId))
+              await DBM.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
+              await DBM.setById(${S(modelName)}, h.params.id, { [${S(attrName)}]: obj[${S(attrName)}].filter(id => id !== rId) })
             }
           })
           `)
         }
+
+        /* return `${S(route('POST', `/${modelName}/{id}/${attrName}`, {}, L(`async (h, reply) => {
+          await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
+        }`)))}` */
 
         return L(`
           server.route({ // this gets the value for a key

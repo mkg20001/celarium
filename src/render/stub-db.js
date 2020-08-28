@@ -42,8 +42,9 @@ module.exports = models => {
   return L(`'use strict'
 
 const ABS = require('celarium/src/abstract/stub-db')
+const WRAP = require('celarium/src/abstract/database')
 
 module.exports = (dbConfig) => {
-  return ABS(dbConfig, require('./joi')())
+  return WRAP(ABS(dbConfig, require('./joi')()))
 }`)
 }

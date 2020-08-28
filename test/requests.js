@@ -25,12 +25,17 @@ describe('requests', () => {
       generated = await generateCode('node:' + require.resolve('../example'))
       stubDb = await generated.load('db')()
       api = await generated.load('api')({
-        host: '::',
+        host: '0.0.0.0',
         port: 7788,
         getUser: h => 1
       }, stubDb)
 
       hapi = api._hapi
+
+      await hapi.register({
+        plugin: require('hapi-pino'),
+        options: { name: 'test-celarium' }
+      })
 
       await hapi.initialize()
     })
@@ -39,7 +44,7 @@ describe('requests', () => {
       let el
 
       before(async () => {
-        el = stubDb.makeElement(await stubDb.getModel('board'), {
+        el = stubDb.db.create('board', {
           name: 'Test',
           description: 'test'
         })

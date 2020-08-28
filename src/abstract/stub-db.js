@@ -42,6 +42,7 @@ function GenId () {
   return String(Math.random()).replace(/[^1-9]/g, '').substr(0, 6)
 }
 
+// TODO: get rid of pandemonica here as it's now above
 function Pandemonica (data, db, model) {
   let hasBeenChanged = false
   let isNew = !data.id
@@ -151,48 +152,30 @@ module.exports = (config, joi) => {
     get: async (model, id) => {
       return db.get(model, { id })
     },
-    auditLog: {
-      addEntry: async (user, model, type, object, targetKey, operation, parameter) => {
-        // User added xyz to group n on object (user, model, type=acl, object, targetKey=n, operation=add, parameter=xyz) (type.operation=acl.add)
-        // User remove xyz from list d on object i (user, model, type=modify, object, targetKey=d, operation=listRemove, parameter=xyz) (modify.listRemove)
+    addAuditEntry: async (user, model, type, object, targetKey, operation, parameter) => {
+      // User added xyz to group n on object (user, model, type=acl, object, targetKey=n, operation=add, parameter=xyz) (type.operation=acl.add)
+      // User remove xyz from list d on object i (user, model, type=modify, object, targetKey=d, operation=listRemove, parameter=xyz) (modify.listRemove)
 
-        const obj = Pandemonica({
-          timestamp: Date.now(),
-          user,
-          model,
-          type,
-          object,
-          targetKey,
-          operation,
-          parameter
-        }, db, Audit)
+      const obj = Pandemonica({
+        timestamp: Date.now(),
+        user,
+        model,
+        type,
+        object,
+        targetKey,
+        operation,
+        parameter
+      }, db, Audit)
 
-        await obj.save()
+      await obj.save()
 
-        return obj.id
-      }
+      return obj.id
     },
-    async makeElement (Model, contents, creator, parent) {
-      const el = Pandemonica(Object.assign({
-        creator,
-        createdOn: new Date(),
-        acl: {}, // TODO: add initial
-        parent
-      }, contents), db, Model)
-
-      await el.save()
-
-      return el
+    async create (model, contents) {
+      // TODO: add
     },
-    async set (target, key, value, updater) {
-      const model = await S.getModel(target.model)
-      // TODO: use direct queries instead of magic object
-      const self = await model.findOne({ _id: target.id })
-      self.updater = updater
-      self.updatedOn = new Date()
-      self[key] = value
-
-      return self.save()
+    async set (model, id, kv) {
+      // TODO: add
     },
 
     connect: () => {
