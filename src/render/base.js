@@ -23,11 +23,11 @@ module.exports = async (config) => {
     DBM,
     API,
     async start () {
-      await DBM.connect()
+      await DBM.control.connect()
       await API.start()
     },
     async stop () {
-      await DBM.disconnect()
+      await DBM.control.disconnect()
       await API.stop()
     }
   }
