@@ -46,7 +46,7 @@ describe('requests', () => {
       let res
 
       before(async () => {
-        el = root = stubDb.db.create('board', { // eslint-disable-line
+        el = root = await stubDb.db.create('board', { // eslint-disable-line
           name: 'Test',
           description: 'test'
         })

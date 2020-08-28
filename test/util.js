@@ -3,21 +3,6 @@
 const assert = require('assert').strict
 const celarium = require('../src')
 
-/* const os = require('os')
-const path = require('path')
-const mkdirp = require('mkdirp').sync
-const rimraf = require('rimraf').sync
-
-function makeTemp () {
-  const tempPath = path.join(os.tmpdir(), 'celarium', String(Math.random()))
-  mkdirp(tempPath)
-
-  return {
-    tempPath,
-    cleanup: () => rimraf(tempPath)
-  }
-} */
-
 module.exports = {
   generateTests (ioList, fnc) {
     ioList.forEach(({ input, output }) => {

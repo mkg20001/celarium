@@ -52,10 +52,6 @@ describe('access control', () => {
       acl = generated.load('acl')(stubDb)
     })
 
-    it('blink', async () => {
-      console.log(stubDb)
-    })
-
     after(async () => {
       generated.cleanup()
     })

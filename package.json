@@ -44,6 +44,7 @@
   },
   "homepage": "https://github.com/mkg20001/celarium#readme",
   "dependencies": {
+    "@hapi/boom": "^9.1.0",
     "@hapi/joi": "^17.1.1",
     "chai": "^4.2.0",
     "fake-joi": "^0.1.0",

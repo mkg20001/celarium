@@ -1,81 +1,7 @@
 'use strict'
 
-const Boom = require('@hapi/boom')
+// const Boom = require('@hapi/boom')
 const Joi = require('joi')
-
-function remap (i, modelName) {
-  /*
-
-  normalized layout:
-    id: id property
-    acl: object containing arrays
-      [key]: array for acl "key" containing flat-acls ({ wildcard?, not?, user: ID })
-    [key]: the usual kv
-    parent: id of parent, if available (note: { model, id } - not just id)
-    model: modelName (virtual)
-    creator: ID of creator if avail
-    createdOn: timestamp of creation
-    updater: ID of last user who updated element
-    updatedOn: timestamp of update
-
-  mongo layout:
-    _id => id
-    rest as-is
-  */
-
-  const o = {}
-
-  for (const key in i) {
-    if (key === '_id') {
-      o.id = i._id
-    } else {
-      o[key] = i[key]
-    }
-  }
-
-  o.model = modelName
-
-  return o
-}
-
-function GenId () {
-  return String(Math.random()).replace(/[^1-9]/g, '').substr(0, 6)
-}
-
-// TODO: get rid of pandemonica here as it's now above
-function Pandemonica (data, db, model) {
-  let hasBeenChanged = false
-  let isNew = !data.id
-
-  const goldenKeys = ['id', 'save']
-
-  data.save = async () => {
-    if (isNew) {
-      isNew = false
-      data.id = GenId()
-      hasBeenChanged = true
-    }
-
-    if (hasBeenChanged) {
-      return db.save(data.id, model, data)
-    }
-  }
-
-  const proxy = new Proxy(data, {
-    get (target, key) {
-      return target[key]
-    },
-    set (target, key, value) {
-      if (goldenKeys.indexOf(key) !== -1) {
-        throw new Error('Nope')
-      }
-
-      target[key] = value
-    }
-  })
-
-  return proxy
-}
 
 /*
 
@@ -112,23 +38,7 @@ module.exports = (config, joi) => {
 
   */
 
-  function DB () {
-    return {
-      save: (id, model, val) => {
-
-      },
-      get: (model, query) => {
-        const res = {} // TODO: do actual querying
-
-        return Pandemonica(res, db, model)
-      },
-      del: id => {
-
-      }
-    }
-  }
-
-  const db = DB()
+  const db = require('./stub-db-mem')()
 
   joi.audit = Joi.object({
     timestamp: Joi.date().required(),
@@ -149,14 +59,12 @@ module.exports = (config, joi) => {
 
       return m
     },
-    get: async (model, id) => {
-      return db.get(model, { id })
-    },
+
     addAuditEntry: async (user, model, type, object, targetKey, operation, parameter) => {
       // User added xyz to group n on object (user, model, type=acl, object, targetKey=n, operation=add, parameter=xyz) (type.operation=acl.add)
       // User remove xyz from list d on object i (user, model, type=modify, object, targetKey=d, operation=listRemove, parameter=xyz) (modify.listRemove)
 
-      const obj = Pandemonica({
+      const data = {
         timestamp: Date.now(),
         user,
         model,
@@ -165,17 +73,23 @@ module.exports = (config, joi) => {
         targetKey,
         operation,
         parameter
-      }, db, Audit)
+      }
 
-      await obj.save()
+      return db.table(model.__name).create(data)
+    },
 
-      return obj.id
+    create (model, contents) {
+      return db.table(model.__name).create(contents)
     },
-    async create (model, contents) {
-      // TODO: add
+    get (model, id) {
+      return db.table(model.__name).get(id)
     },
-    async set (model, id, kv) {
-      // TODO: add
+    set (model, id, kv) {
+      const table = db.table(model.__name)
+      return table.store(id, Object.assign(table.get(id), kv))
+    },
+    del (model, id) {
+      return db.table(model.__name).del(id)
     },
 
     connect: () => {
@@ -186,7 +100,7 @@ module.exports = (config, joi) => {
     }
   }
 
-  const Audit = S.getModel('audit')
+  // const Audit = S.getModel('audit')
 
   return S
 }

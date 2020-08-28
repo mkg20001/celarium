@@ -1,7 +1,7 @@
 'use strict'
 
 function Pandemonica (bare, db, model) { // our new magic object
-  const isNew = !bare.id
+  let isNew = !bare.id
 
   const goldenKeys = ['id', 'save']
 
@@ -59,7 +59,9 @@ module.exports = abs => {
           parent
         }
 
-        return Pandemonica(bare, abs, await resolveModel(modelName))
+        const out = Pandemonica(bare, abs, await resolveModel(modelName))
+        await out.save()
+        return out
       },
       async getById (modelName, id) {
         const res = await abs.get(await resolveModel(modelName), { id })
@@ -98,66 +100,5 @@ module.exports = abs => {
       disconnect: abs.disconnect
     },
     _: abs
-
-    /*    getModelasync modelName => {
-          const m = joi[modelName]
-          m.__name = modelName
-
-          return m
-        },
-        get: async (model, id) => {
-          return db.get(model, { id })
-        },
-        auditLog: {
-          addEntry: async (user, model, type, object, targetKey, operation, parameter) => {
-            // User added xyz to group n on object (user, model, type=acl, object, targetKey=n, operation=add, parameter=xyz) (type.operation=acl.add)
-            // User remove xyz from list d on object i (user, model, type=modify, object, targetKey=d, operation=listRemove, parameter=xyz) (modify.listRemove)
-
-            const obj = Pandemonica({
-              timestamp: Date.now(),
-              user,
-              model,
-              type,
-              object,
-              targetKey,
-              operation,
-              parameter
-            }, db, Audit)
-
-            await obj.save()
-
-            return obj.id
-          }
-        },
-        async makeElement (Model, contents, creator, parent) {
-          const el = Pandemonica(Object.assign({
-            creator,
-            createdOn: new Date(),
-            acl: {}, // TODO: add initial
-            parent
-          }, contents), db, Model)
-
-          await el.save()
-
-          return el
-        },
-        async set (target, key, value, updater) {
-          const model = await S.getModel(target.model)
-          // TODO: use direct queries instead of magic object
-          const self = await model.findOne({ _id: target.id })
-          self.updater = updater
-          self.updatedOn = new Date()
-          self[key] = value
-
-          return self.save()
-        },
-
-        connect: () => {
-
-        },
-        disconnect: () => {
-
-        }
-      } */
   }
 }
