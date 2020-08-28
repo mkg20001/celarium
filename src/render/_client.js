@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = (baseUrl, extraHeaders, credentials) => {
-  const { fetch } = global.window ? (window.fetch ? window.fetch : require('whatwg-fetch')) : require('node-fetch') // TODO: polyfill?
+  const { fetch } = global.window ? (window.fetch ? window.fetch : require('whatwg-fetch')) : require('node-fetch')
 
   const req = async (url, method = 'GET', headers = {}, body) => {
     if (body) {

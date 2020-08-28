@@ -1,6 +1,7 @@
 'use strict'
 
 /* eslint-env mocha */
+/* eslint-disable require-atomic-updates */
 
 const chai = require('chai')
 const expect = chai.expect
@@ -27,7 +28,7 @@ describe('requests', () => {
       api = await generated.load('api')({
         host: '0.0.0.0',
         port: 7788,
-        getUser: h => 1
+        getUser: h => h.headers.uid ? parseInt(h.headers.uid, 10) : 0
       }, stubDb)
 
       hapi = api._hapi
@@ -40,24 +41,61 @@ describe('requests', () => {
       await hapi.initialize()
     })
 
-    describe('basic fetch', () => {
+    describe('basic fetch/post', () => {
       let el
+      let res
 
       before(async () => {
-        el = stubDb.db.create('board', {
+        el = root = stubDb.db.create('board', { // eslint-disable-line
           name: 'Test',
           description: 'test'
         })
       })
 
       it('fetch newly created board', async () => {
-        const res = await hapi.inject({
+        res = await hapi.inject({
           method: 'get',
           url: `/board/${el.id}`
         })
 
         expect(res.statusCode).to.equal(200)
         expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('Test')
+      })
+
+      it('update name and verify', async () => {
+        res = await hapi.inject({
+          method: 'post',
+          url: `/board/${el.id}/name`,
+          payload: 'TestBoard'
+        })
+
+        expect(res.statusCode).to.equal(200)
+
+        res = await hapi.inject({
+          method: 'get',
+          url: `/board/${el.id}`
+        })
+
+        expect(res.statusCode).to.equal(200)
+        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('TestBoard')
+      })
+
+      it('update name via mass update and verify', async () => {
+        res = await hapi.inject({
+          method: 'post',
+          url: `/board/${el.id}`,
+          payload: JSON.stringify({ name: 'TheTestBoard' })
+        })
+
+        expect(res.statusCode).to.equal(200)
+
+        res = await hapi.inject({
+          method: 'get',
+          url: `/board/${el.id}`
+        })
+
+        expect(res.statusCode).to.equal(200)
+        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('TheTestBoard')
       })
     })
 
