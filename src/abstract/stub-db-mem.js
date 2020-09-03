@@ -22,7 +22,7 @@ module.exports = () => {
         },
         get: id => {
           if (!storage[id]) {
-            throw Boom.notFound(id)
+            throw Boom.notFound(`Element ${id} does not exist`)
           }
 
           return storage[id]
