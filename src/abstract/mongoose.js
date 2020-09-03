@@ -59,20 +59,6 @@ function remap (i, modelName) {
   return o
 }
 
-function unmap (o) {
-  const i = {}
-
-  for (const key in o) {
-    if (key === 'id') {
-      i._id = o.id
-    } else {
-      o[key] = i[key]
-    }
-  }
-
-  return o
-}
-
 module.exports = config => {
   const auditModel = {
     timestamp: { type: Date, required: true },

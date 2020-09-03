@@ -24,7 +24,7 @@ describe('requests', () => {
     before(async function () {
       this.timeout(10000)
       generated = await generateCode('node:' + require.resolve('../example'))
-      stubDb = await generated.load('db')()
+      stubDb = await generated.load('db')({}, await generated.load('acl'))
       api = await generated.load('api')({
         host: '0.0.0.0',
         port: 7788,
@@ -66,7 +66,7 @@ describe('requests', () => {
         res = await hapi.inject({
           method: 'post',
           url: `/board/${el.id}/name`,
-          payload: 'TestBoard'
+          payload: JSON.stringify('TestBoard')
         })
 
         expect(res.statusCode).to.equal(200)
@@ -82,7 +82,7 @@ describe('requests', () => {
 
       it('update name via mass update and verify', async () => {
         res = await hapi.inject({
-          method: 'post',
+          method: 'patch',
           url: `/board/${el.id}`,
           payload: JSON.stringify({ name: 'TheTestBoard' })
         })

@@ -26,11 +26,11 @@ module.exports = (models, config) => {
 
           for (const key in obj) {
             // (obj, user, modelName, model, attrName, action, listAction, listNextId)
-            if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, key, 'access')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+            if (!await validateAcls(obj, getUser(h), ${S(modelName)}, key, 'access')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
               delete obj[key]
             } else if (accessLog) {
-              // await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
-              await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, key) // (user, model, type, object, targetKey, operation, parameter)
+              // await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "access", h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
+              await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "access", h.params.id, key) // (user, model, type, object, targetKey, operation, parameter)
             }
           }
 
@@ -49,14 +49,12 @@ module.exports = (models, config) => {
 
           for (const key in payload) {
             // (obj, user, modelName, model, attrName, action, listAction, listNextId)
-            if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, key, 'modify')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+            if (!await validateAcls(obj, getUser(h), ${S(modelName)}, key, 'modify')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
               throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
             }
           }
 
-          for (const key in payload) {
-            await DBM.set(obj, key, payload[key], getUser(h))
-          }
+          await DBM.db.setById(${S(modelName)}, obj.id, payload, getUser(h))
 
           return {ok: true}
         }
@@ -77,12 +75,12 @@ module.exports = (models, config) => {
 
               // TODO: access, etc per key
 
-              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, key, null, 'modify', "todo")) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, key, null, 'modify', "todo")) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
                 throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
               }
 
               if (accessLog) {
-                await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}, null, null) // (user, model, type, object, targetKey, operation, parameter)
+                await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}, null, null) // (user, model, type, object, targetKey, operation, parameter)
               }
             }
           })
@@ -95,7 +93,7 @@ module.exports = (models, config) => {
               const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
               // (obj, user, modelName, model, attrName, action, listAction, listNextId)
-              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, null, 'append')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${S(attrName)}, null, 'append')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
                 throw Boom.unauthorized()
               }
 
@@ -108,7 +106,7 @@ module.exports = (models, config) => {
               const newId = makeElement (${modelName}, payload, getUser(h), h.params.id)
               await DBM.set(obj, ${S(attrName)}, obj[${S(attrName)}].concat([newId]), getUser(h))
 
-              await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
+              await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
             }
           })
 
@@ -122,11 +120,11 @@ module.exports = (models, config) => {
               const rObj = await DBM.getById(${S(subType)}, rId)
 
               // (obj, user, modelName, model, attrName, action, listAction, listNextId)
-              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, null, 'remove', rId)) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${S(attrName)}, null, 'remove', rId)) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
                 throw Boom.unauthorized()
               }
 
-              await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
+              await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
 
               await DBM.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
               await DBM.setById(${S(modelName)}, h.params.id, { [${S(attrName)}]: obj[${S(attrName)}].filter(id => id !== rId) })
@@ -136,7 +134,7 @@ module.exports = (models, config) => {
         }
 
         /* return `${S(route('POST', `/${modelName}/{id}/${attrName}`, {}, L(`async (h, reply) => {
-          await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
+          await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
         }`)))}` */
 
         return L(`
@@ -145,14 +143,14 @@ module.exports = (models, config) => {
             path: '/${modelName}/{id}/${attrName}',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.get(${modelName}, h.params.id)
+              const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
               // (obj, user, modelName, model, attrName, action, listAction, listNextId)
-              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, 'access')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${S(attrName)}, 'access')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
                 throw Boom.unauthorized()
               }
 
-              await DBM.auditLog(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
+              await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
 
               return obj[${S(attrName)}]
             }
@@ -163,16 +161,16 @@ module.exports = (models, config) => {
             path: '/${modelName}/{id}/${attrName}',
             // TODO: validate request
             handler: async (h, reply) => {
-              const obj = await DBM.get(${modelName}, h.params.id)
+              const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
               // (obj, user, modelName, model, attrName, action, listAction, listNextId)
-              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${modelName}, ${S(attrName)}, 'modify')) {
+              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${S(attrName)}, 'modify')) {
                 throw Boom.unauthorized()
               }
 
-              await DBM.auditLog(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
+              await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
 
-              await DBM.set(obj, ${S(attrName)}, h.payload, getUser(h))
+              await DBM.db.setById(${S(modelName)}, obj.id, {[${S(attrName)}]: h.payload}, getUser(h))
 
               return {ok: true}
             }
@@ -185,10 +183,9 @@ module.exports = (models, config) => {
 
 const Hapi = require('@hapi/hapi')
 const Boom = require('@hapi/boom')
-const ACL = require('./acl')
 
 module.exports = async (config, DBM) => {
-  const {validateAcls} = ACL(DBM)
+  const {validateAcls} = DBM
   const accessLog = false // TODO: make configurable?
 
   const server = new Hapi.Server({

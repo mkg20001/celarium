@@ -37,7 +37,7 @@ function Pandemonica (bare, db, model) { // our new magic object
   return proxy
 }
 
-module.exports = abs => {
+module.exports = (abs, ACL) => {
   const modelCache = {}
 
   async function resolveModel (modelName) {
@@ -48,16 +48,16 @@ module.exports = abs => {
     return await modelCache[modelName]
   }
 
-  return {
+  const DBM = {
     db: {
       // TODO: validate all inputs using joi?
       async create (modelName, newContents, creator, parent) {
-        const bare = {
+        const bare = Object.assign(Object.assign({}, newContents), {
           creator,
           createdOn: new Date(),
           acl: {}, // TODO: add initial
           parent
-        }
+        })
 
         const out = Pandemonica(bare, abs, await resolveModel(modelName))
         await out.save()
@@ -89,6 +89,9 @@ module.exports = abs => {
 
       }
     },
+    validateAcls: async (obj, user, modelName, attrName, action, listAction, listNextId) => {
+      return validateAcls(obj, user, modelName, await resolveModel(modelName), attrName, action, listAction, listNextId)
+    },
     auditLog: {
       // TODO: this should be it's own model, appended compile time, then referenced here
       addEntry (user, model, type, object, targetKey, operation, parameter) {
@@ -101,4 +104,8 @@ module.exports = abs => {
     },
     _: abs
   }
+
+  const { validateAcls } = ACL(DBM)
+
+  return DBM
 }

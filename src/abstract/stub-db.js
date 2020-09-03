@@ -81,8 +81,8 @@ module.exports = (config, joi) => {
     create (model, contents) {
       return db.table(model.__name).create(contents)
     },
-    get (model, id) {
-      return db.table(model.__name).get(id)
+    get (model, query) {
+      return db.table(model.__name).get(query.id)
     },
     set (model, id, kv) {
       const table = db.table(model.__name)

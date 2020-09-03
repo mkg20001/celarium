@@ -16,7 +16,7 @@ module.exports = async (config) => {
 
   config = value
 
-  const DBM = await (require('./db')(config.db))
+  const DBM = await (require('./db')(config.db, require('./acl')))
   const API = await (require('./api')(config.api, DBM))
 
   return {
