@@ -23,7 +23,7 @@ async function main () {
 
   await start()
 
-  const root = await db.makeElement(await db.getModel('board'), {
+  const root = await db.db.create('board', {
     name: 'Burd', // Board written wrong intentionally
     description: 'The Test Burd'
   })

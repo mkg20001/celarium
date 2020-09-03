@@ -105,7 +105,9 @@ module.exports = config => {
     async create (Model, contents, creator, parent) {
       const m = new Model(contents)
 
-      return remap(await wrapRethrow(m.save()))
+      const res = await wrapRethrow(m.save())
+
+      return res._id
     },
     async set (model, targetId, updateKV) {
       // TODO: use direct queries instead of magic object
