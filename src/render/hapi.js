@@ -75,8 +75,10 @@ module.exports = (models, config) => {
 
               // TODO: access, etc per key
 
-              if (!await validateAcls(obj, getUser(h), ${S(modelName)}, key, null, 'modify', "todo")) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
-                throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
+              for (const key in obj) {
+                if (!await validateAcls(obj, getUser(h), ${S(modelName)}, key, null, 'modify', "todo")) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+                  throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
+                }
               }
 
               if (accessLog) {
@@ -99,14 +101,24 @@ module.exports = (models, config) => {
 
               const {payload} = h
 
-              // if:symbolic = payload should be id, added to list
-              // if:non-symbolic = payload should be object, created with this as parent, added to list
+              ${
+                false // TODO: add isSymbolic
+                ? `
+                // if:symbolic = payload should be id, added to list
+                await DBM.db.getById(${S(subType)}, payload) // check if exists
+                `
+                : `
+                // if:non-symbolic = payload should be object, created with this as parent, added to list
 
-              // non-symbolic
-              const newId = makeElement (${modelName}, payload, getUser(h), h.params.id)
-              await DBM.set(obj, ${S(attrName)}, obj[${S(attrName)}].concat([newId]), getUser(h))
+                // TODO: recursivly validate acls
+                const newId = await DBM.db.create(${S(modelName)}, payload, getUser(h))
+                `
+              }
 
+              await DBM.db.setById(${S(modelName)}, obj.id, {[${S(attrName)}]: obj[${S(attrName)}].concat([newId])}, getUser(h))
               await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
+
+              return newId
             }
           })
 

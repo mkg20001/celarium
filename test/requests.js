@@ -99,6 +99,45 @@ describe('requests', () => {
       })
     })
 
+    describe('topic', () => {
+      let topicId
+      let res
+
+      it('create new topic', async () => {
+        res = await hapi.inject({
+          method: 'post',
+          url: `/board/${root.id}/topics/append`,
+          payload: JSON.stringify({
+            name: 'TestTopic',
+            desc: 'Just a test'
+          })
+        })
+
+        expect(res.statusCode).to.equal(200)
+        topicId = res.payload
+      })
+
+      it('fetch topic', async () => {
+        res = await hapi.inject({
+          method: 'get',
+          url: `/topic/${topicId}`
+        })
+
+        expect(res.statusCode).to.equal(200)
+        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('TestTopic')
+      })
+
+      it('list all topics of board', async () => {
+        res = await hapi.inject({
+          method: 'get',
+          url: `/board/${root.id}/topics`
+        })
+
+        expect(res.statusCode).to.equal(200)
+        expect(JSON.parse(res.payload)[0]).to.have.property('name').that.is.equal('TestTopic')
+      })
+    })
+
     after(async () => {
       generated.cleanup()
     })
