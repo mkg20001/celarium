@@ -2,6 +2,7 @@
 
 const assert = require('assert').strict
 const celarium = require('../src')
+const JIT = celarium.jit()
 
 module.exports = {
   generateTests (ioList, fnc) {
@@ -12,6 +13,6 @@ module.exports = {
     })
   },
   generateCode (inputModel, config = { db: 'stub-db', api: 'hapi' }) {
-    return celarium.jit().compile(inputModel, config)
+    return JIT.compile(inputModel, config)
   }
 }

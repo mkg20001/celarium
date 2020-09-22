@@ -48,8 +48,13 @@ describe('access control', () => {
     before(async function () {
       this.timeout(10000)
       generated = await generateCode('node:' + require.resolve('../example'))
-      stubDb = generated.load('db')()
-      acl = generated.load('acl')(stubDb)
+      const ACL = generated.load('acl')
+      stubDb = generated.load('db')({}, ACL)
+      acl = ACL(stubDb)
+    })
+
+    describe('board acl', () => {
+
     })
 
     after(async () => {
