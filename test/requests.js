@@ -59,7 +59,7 @@ describe('requests', () => {
         })
 
         expect(res.statusCode).to.equal(200)
-        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('Test')
+        expect(res.result).to.have.property('name').that.is.equal('Test')
       })
 
       it('update name and verify', async () => {
@@ -77,7 +77,7 @@ describe('requests', () => {
         })
 
         expect(res.statusCode).to.equal(200)
-        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('TestBoard')
+        expect(res.result).to.have.property('name').that.is.equal('TestBoard')
       })
 
       it('update name via mass update and verify', async () => {
@@ -95,7 +95,7 @@ describe('requests', () => {
         })
 
         expect(res.statusCode).to.equal(200)
-        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('TheTestBoard')
+        expect(res.result).to.have.property('name').that.is.equal('TheTestBoard')
       })
     })
 
@@ -114,7 +114,7 @@ describe('requests', () => {
         })
 
         expect(res.statusCode).to.equal(200)
-        topicId = res.payload
+        topicId = res.result
       })
 
       it('fetch topic', async () => {
@@ -124,7 +124,7 @@ describe('requests', () => {
         })
 
         expect(res.statusCode).to.equal(200)
-        expect(JSON.parse(res.payload)).to.have.property('name').that.is.equal('TestTopic')
+        expect(res.result).to.have.property('name').that.is.equal('TestTopic')
       })
 
       it('list all topics of board', async () => {
@@ -134,7 +134,8 @@ describe('requests', () => {
         })
 
         expect(res.statusCode).to.equal(200)
-        expect(JSON.parse(res.payload)[0]).to.have.property('name').that.is.equal('TestTopic')
+        expect(res.result).to.have.lengthOf(1)
+        expect(res.result[0]).to.have.property('name').that.is.equal('TestTopic')
       })
     })
 

@@ -70,19 +70,53 @@ module.exports = (models, config) => {
             path: '/${modelName}/{id}/${attrName}',
             // TODO: validate request
             // TODO: pagination, filtering...
-            handler: async (h, reply) => {
-              const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
+            config: {
+              validate: {
+                query: Joi.object({
+                  page: Joi.number().integer().min(1).default(1),
+                  limit: Joi.number().integer().min(1).max(1000).default(50)
+                })
+              },
+              handler: async (h, reply) => {
+                const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
 
-              // TODO: access, etc per key
+                // TODO: access, etc per key
 
-              for (const key in obj) {
-                if (!await validateAcls(obj, getUser(h), ${S(modelName)}, key, null, 'modify', "todo")) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
-                  throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
+                for (const key in obj) {
+                  if (!await validateAcls(obj, getUser(h), ${S(modelName)}, key, null, 'modify', "todo")) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+                    throw Boom.unauthorized('Not authorised for key ' + JSON.stringify(key))
+                  }
                 }
-              }
 
-              if (accessLog) {
-                await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}, null, null) // (user, model, type, object, targetKey, operation, parameter)
+                if (accessLog) {
+                  await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "access", h.params.id, ${S(attrName)}, null, null) // (user, model, type, object, targetKey, operation, parameter)
+                }
+
+                // THIS IS ABSOLUTE GARBAGE AND SHOULD BE REPLACED ASAP
+                // ALSO DOESN'T DO ACL
+
+                // instead we should query by parent for non-sym and check ACLs during query
+                // for sym no idea
+
+                const startAt = h.query.limit * (h.query.page - 1)
+                const endAt = h.query.limit * h.query.page
+                const total = obj[${S(attrName)}].length
+
+                let res = await Promise.all(obj[${S(attrName)}].slice(startAt, endAt).map(id => DBM.db.getById(${S(subType)}, id)))
+
+                await Promise.all(res.map(async obj => {
+                  for (const key in obj) {
+                    // (obj, user, modelName, model, attrName, action, listAction, listNextId)
+                    if (!await validateAcls(obj, getUser(h), ${S(subType)}, key, 'access')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+                      delete obj[key]
+                    } else if (accessLog) {
+                      // await DBM.auditLog.addEntry(getUser(h), ${S(subType)}, "access", h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
+                      await DBM.auditLog.addEntry(getUser(h), ${S(subType)}, "access", h.params.id, key) // (user, model, type, object, targetKey, operation, parameter)
+                    }
+                  }
+                }))
+
+                return res
               }
             }
           })
@@ -111,11 +145,11 @@ module.exports = (models, config) => {
                 // if:non-symbolic = payload should be object, created with this as parent, added to list
 
                 // TODO: recursivly validate acls
-                const newId = await DBM.db.create(${S(modelName)}, payload, getUser(h))
+                const newId = (await DBM.db.create(${S(subType)}, payload, getUser(h))).id
                 `
               }
 
-              await DBM.db.setById(${S(modelName)}, obj.id, {[${S(attrName)}]: obj[${S(attrName)}].concat([newId])}, getUser(h))
+              await DBM.db.setById(${S(modelName)}, obj.id, {[${S(attrName)}]: (obj[${S(attrName)}] || []).concat([newId])}, getUser(h))
               await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
 
               return newId
@@ -195,6 +229,7 @@ module.exports = (models, config) => {
 
 const Hapi = require('@hapi/hapi')
 const Boom = require('@hapi/boom')
+const Joi = require('joi')
 
 module.exports = async (config, DBM) => {
   const {validateAcls} = DBM
