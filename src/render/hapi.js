@@ -163,7 +163,7 @@ module.exports = (models, config) => {
             handler: async (h, reply) => {
               const obj = await DBM.db.getById(${S(modelName)}, h.params.id)
               const rId = h.payload
-              const rObj = await DBM.getById(${S(subType)}, rId)
+              const rObj = await DBM.db.getById(${S(subType)}, rId)
 
               // (obj, user, modelName, model, attrName, action, listAction, listNextId)
               if (!await validateAcls(obj, getUser(h), ${S(modelName)}, ${S(attrName)}, null, 'remove', rId)) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
@@ -173,13 +173,15 @@ module.exports = (models, config) => {
               ${
                 false // TODO: add isSymbolic
                 ? '' : `
-                await DBM.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
-                await DBM.db.delById(${subType}, rId)
+                await DBM.db.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
+                await DBM.db.delById(${S(subType)}, rId)
                 `
               }
 
               await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
-              await DBM.setById(${S(modelName)}, h.params.id, { [${S(attrName)}]: obj[${S(attrName)}].filter(id => id !== rId) })
+              await DBM.db.setById(${S(modelName)}, h.params.id, { [${S(attrName)}]: obj[${S(attrName)}].filter(id => id !== rId) })
+
+              return {ok: true}
             }
           })
           `)

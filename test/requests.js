@@ -6,8 +6,6 @@
 const chai = require('chai')
 const expect = chai.expect
 
-const parse = require('../src/acl').parse
-
 const {
   generateTests,
   generateCode
@@ -136,6 +134,27 @@ describe('requests', () => {
         expect(res.statusCode).to.equal(200)
         expect(res.result).to.have.lengthOf(1)
         expect(res.result[0]).to.have.property('name').that.is.equal('TestTopic')
+      })
+
+      it('delete new topic', async () => {
+        res = await hapi.inject({
+          method: 'post',
+          url: `/board/${root.id}/topics/remove`,
+          payload: topicId
+        })
+
+        expect(res.statusCode).to.equal(200)
+        topicId = res.result
+      })
+
+      it('list all topics of board again', async () => {
+        res = await hapi.inject({
+          method: 'get',
+          url: `/board/${root.id}/topics`
+        })
+
+        expect(res.statusCode).to.equal(200)
+        expect(res.result).to.have.lengthOf(0)
       })
     })
 
