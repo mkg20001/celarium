@@ -170,9 +170,15 @@ module.exports = (models, config) => {
                 throw Boom.unauthorized()
               }
 
-              await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
+              ${
+                false // TODO: add isSymbolic
+                ? '' : `
+                await DBM.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
+                await DBM.db.delById(${subType}, rId)
+                `
+              }
 
-              await DBM.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
+              await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
               await DBM.setById(${S(modelName)}, h.params.id, { [${S(attrName)}]: obj[${S(attrName)}].filter(id => id !== rId) })
             }
           })
