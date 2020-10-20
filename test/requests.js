@@ -8,7 +8,7 @@ const expect = chai.expect
 
 const {
   generateTests,
-  generateCode
+  generateCode,
 } = require('./util')
 
 describe('requests', () => {
@@ -26,14 +26,14 @@ describe('requests', () => {
       api = await generated.load('api')({
         host: '0.0.0.0',
         port: 7788,
-        getUser: h => h.headers.uid ? parseInt(h.headers.uid, 10) : 0
+        getUser: h => h.headers.uid ? parseInt(h.headers.uid, 10) : 0,
       }, stubDb)
 
       hapi = api._hapi
 
       await hapi.register({
         plugin: require('hapi-pino'),
-        options: { name: 'test-celarium' }
+        options: {name: 'test-celarium'},
       })
 
       await hapi.initialize()
@@ -46,14 +46,14 @@ describe('requests', () => {
       before(async () => {
         el = root = await stubDb.db.create('board', { // eslint-disable-line
           name: 'Test',
-          description: 'test'
+          description: 'test',
         })
       })
 
       it('fetch newly created board', async () => {
         res = await hapi.inject({
           method: 'get',
-          url: `/board/${el.id}`
+          url: `/board/${el.id}`,
         })
 
         expect(res.statusCode).to.equal(200)
@@ -64,14 +64,14 @@ describe('requests', () => {
         res = await hapi.inject({
           method: 'post',
           url: `/board/${el.id}/name`,
-          payload: JSON.stringify('TestBoard')
+          payload: JSON.stringify('TestBoard'),
         })
 
         expect(res.statusCode).to.equal(200)
 
         res = await hapi.inject({
           method: 'get',
-          url: `/board/${el.id}`
+          url: `/board/${el.id}`,
         })
 
         expect(res.statusCode).to.equal(200)
@@ -82,14 +82,14 @@ describe('requests', () => {
         res = await hapi.inject({
           method: 'patch',
           url: `/board/${el.id}`,
-          payload: JSON.stringify({ name: 'TheTestBoard' })
+          payload: JSON.stringify({name: 'TheTestBoard'}),
         })
 
         expect(res.statusCode).to.equal(200)
 
         res = await hapi.inject({
           method: 'get',
-          url: `/board/${el.id}`
+          url: `/board/${el.id}`,
         })
 
         expect(res.statusCode).to.equal(200)
@@ -107,8 +107,8 @@ describe('requests', () => {
           url: `/board/${root.id}/topics/append`,
           payload: JSON.stringify({
             name: 'TestTopic',
-            desc: 'Just a test'
-          })
+            desc: 'Just a test',
+          }),
         })
 
         expect(res.statusCode).to.equal(200)
@@ -118,7 +118,7 @@ describe('requests', () => {
       it('fetch topic', async () => {
         res = await hapi.inject({
           method: 'get',
-          url: `/topic/${topicId}`
+          url: `/topic/${topicId}`,
         })
 
         expect(res.statusCode).to.equal(200)
@@ -128,7 +128,7 @@ describe('requests', () => {
       it('list all topics of board', async () => {
         res = await hapi.inject({
           method: 'get',
-          url: `/board/${root.id}/topics`
+          url: `/board/${root.id}/topics`,
         })
 
         expect(res.statusCode).to.equal(200)
@@ -140,7 +140,7 @@ describe('requests', () => {
         res = await hapi.inject({
           method: 'post',
           url: `/board/${root.id}/topics/remove`,
-          payload: topicId
+          payload: topicId,
         })
 
         expect(res.statusCode).to.equal(200)
@@ -150,7 +150,7 @@ describe('requests', () => {
       it('list all topics of board again', async () => {
         res = await hapi.inject({
           method: 'get',
-          url: `/board/${root.id}/topics`
+          url: `/board/${root.id}/topics`,
         })
 
         expect(res.statusCode).to.equal(200)

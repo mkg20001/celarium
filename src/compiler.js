@@ -1,13 +1,13 @@
 'use strict'
 
-const { Linter } = require('eslint')
-const { S, L } = require('./utils')
+const {Linter} = require('eslint')
+const {S, L} = require('./utils')
 
-async function compiler (tree, render, beautify) {
+async function compiler(tree, render, beautify) {
   const out = {}
   const treeStripped = {}
 
-  const eslint = new Linter({ fix: true })
+  const eslint = new Linter({fix: true})
 
   for (const key in tree) {
     if (!key.startsWith('@')) {

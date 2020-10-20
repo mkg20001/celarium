@@ -24,13 +24,13 @@ const baseModel = {
   // acl
   parent: Joi.object({
     model: Joi.string().required(),
-    id: Joi.string().required()
+    id: Joi.string().required(),
   }).required(),
   model: Joi.string().required(),
   creator: Joi.any(),
   createdOn: Joi.date().required(),
   updater: Joi.any(),
-  updatedOn: Joi.any()
+  updatedOn: Joi.any(),
 }
 
 module.exports = (config, joi) => {
@@ -49,7 +49,7 @@ module.exports = (config, joi) => {
     targetKey: Joi.string().required(),
     operation: Joi.string().required(),
     parameter: Joi.string().required(),
-    ...baseModel
+    ...baseModel,
   })
 
   const S = {
@@ -72,23 +72,23 @@ module.exports = (config, joi) => {
         object,
         targetKey,
         operation,
-        parameter
+        parameter,
       }
 
       return db.table(model.__name).create(data)
     },
 
-    create (model, contents) {
+    create(model, contents) {
       return db.table(model.__name).create(contents)
     },
-    get (model, query) {
+    get(model, query) {
       return db.table(model.__name).get(query.id)
     },
-    set (model, id, kv) {
+    set(model, id, kv) {
       const table = db.table(model.__name)
       return table.store(id, Object.assign(table.get(id), kv))
     },
-    del (model, id) {
+    del(model, id) {
       return db.table(model.__name).del(id)
     },
 
@@ -97,7 +97,7 @@ module.exports = (config, joi) => {
     },
     disconnect: () => {
 
-    }
+    },
   }
 
   // const Audit = S.getModel('audit')

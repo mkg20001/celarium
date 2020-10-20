@@ -1,6 +1,6 @@
 'use strict'
 
-const { S } = require('../utils')
+const {S} = require('../utils')
 const path = require('path')
 const fs = require('fs')
 

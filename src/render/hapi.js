@@ -1,6 +1,6 @@
 'use strict'
 
-const { L, S, Joi, iterateKeysToArstr } = require('../utils')
+const {L, S, Joi, iterateKeysToArstr} = require('../utils')
 
 // const Stack = require('celarium/src/acl/stack')
 
@@ -10,7 +10,7 @@ module.exports = (models, config) => {
       return L(`server.route(${S(Object.assign({
         method,
         path,
-        handler
+        handler,
       }, options))})`)
     }
 
@@ -61,10 +61,10 @@ module.exports = (models, config) => {
       })
 
       ${S(iterateKeysToArstr(model.attributes, (attrName, attr) => {
-        if (attr.isList) {
-          const subType = attr.typeName // we already have that loaded somewhere else, so no need to pull again
+    if (attr.isList) {
+      const subType = attr.typeName // we already have that loaded somewhere else, so no need to pull again
 
-          return L(`
+      return L(`
           server.route({ // this gets all the objects in a list, with pagination etc...
             method: 'GET',
             path: '/${modelName}/{id}/${attrName}',
@@ -136,18 +136,18 @@ module.exports = (models, config) => {
               const {payload} = h
 
               ${
-                false // TODO: add isSymbolic
-                ? `
+  false ? // TODO: add isSymbolic
+    `
                 // if:symbolic = payload should be id, added to list
                 await DBM.db.getById(${S(subType)}, payload) // check if exists
-                `
-                : `
+                ` :
+    `
                 // if:non-symbolic = payload should be object, created with this as parent, added to list
 
                 // TODO: recursivly validate acls
                 const newId = (await DBM.db.create(${S(subType)}, payload, getUser(h))).id
                 `
-              }
+}
 
               await DBM.db.setById(${S(modelName)}, obj.id, {[${S(attrName)}]: (obj[${S(attrName)}] || []).concat([newId])}, getUser(h))
               await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "add", newId) // (user, model, type, object, targetKey, operation, parameter)
@@ -171,12 +171,12 @@ module.exports = (models, config) => {
               }
 
               ${
-                false // TODO: add isSymbolic
-                ? '' : `
+  false ? // TODO: add isSymbolic
+    '' : `
                 await DBM.db.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
                 await DBM.db.delById(${S(subType)}, rId)
                 `
-              }
+}
 
               await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}, "remove", rId) // (user, model, type, object, targetKey, operation, parameter)
               await DBM.db.setById(${S(modelName)}, h.params.id, { [${S(attrName)}]: obj[${S(attrName)}].filter(id => id !== rId) })
@@ -185,13 +185,13 @@ module.exports = (models, config) => {
             }
           })
           `)
-        }
+    }
 
-        /* return `${S(route('POST', `/${modelName}/{id}/${attrName}`, {}, L(`async (h, reply) => {
+    /* return `${S(route('POST', `/${modelName}/{id}/${attrName}`, {}, L(`async (h, reply) => {
           await DBM.auditLog.addEntry(getUser(h), ${S(modelName)}, "modify", h.params.id, ${S(attrName)}) // (user, model, type, object, targetKey, operation, parameter)
         }`)))}` */
 
-        return L(`
+    return L(`
           server.route({ // this gets the value for a key
             method: 'GET',
             path: '/${modelName}/{id}/${attrName}',
@@ -230,7 +230,7 @@ module.exports = (models, config) => {
             }
           })
           `)
-      }))}`)
+  }))}`)
   })
 
   return L(`'use strict'

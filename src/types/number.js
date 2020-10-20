@@ -1,15 +1,15 @@
 'use strict'
 
-const { L, Joi } = require('../utils')
+const {L, Joi} = require('../utils')
 const FJoi = require('fake-joi')
 
 module.exports = {
   mongoose: {
     literalParameters: params => {
-      const out = { type: L('Number'), required: params.required || false }
+      const out = {type: L('Number'), required: params.required || false}
 
       return out
-    }
+    },
   },
   joi: {
     literalParameters: params => {
@@ -28,10 +28,10 @@ module.exports = {
       }
 
       return L(out._)
-    }
+    },
   },
   parameters: {
     min: Joi.number(),
-    max: Joi.number()
-  }
+    max: Joi.number(),
+  },
 }

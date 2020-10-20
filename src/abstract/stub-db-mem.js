@@ -29,8 +29,8 @@ module.exports = () => {
         },
         del: id => {
           delete storage[id]
-        }
+        },
       }
-    }
+    },
   }
 }

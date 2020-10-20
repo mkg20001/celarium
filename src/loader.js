@@ -9,7 +9,7 @@ const aclSchema = Joi.object({
   initial: Joi.array().items(Joi.string()).default([]),
   fixed: Joi.array().items(Joi.string()).default([]),
   append: Joi.array().items(Joi.string()).default([]),
-  delete: Joi.array().items(Joi.string()).default([])
+  delete: Joi.array().items(Joi.string()).default([]),
 })
 
 /* const attributeSchemaBase = { // attr schema base
@@ -35,7 +35,7 @@ const attributeSchemaBase = Joi. */
 const listSchema = Joi.object({
   type: Joi.string().pattern(/\[\]$/).required(),
   append: Joi.array().items(Joi.string()).default([]),
-  delete: Joi.array().items(Joi.string()).default([])
+  delete: Joi.array().items(Joi.string()).default([]),
 
 })
 
@@ -45,13 +45,13 @@ const typeSchemas = Object.keys(types).map(type => {
   return Object.assign({
     type: Joi.string().valid(type).required(),
     modify: Joi.array().items(Joi.string()).default([]),
-    notNull: Joi.boolean().default(false)
+    notNull: Joi.boolean().default(false),
   }, types[type].parameters)
 })
 
 const attrSchemas = [
   listSchema,
-  ...typeSchemas
+  ...typeSchemas,
 ]
 
 const attributeSchema = Joi.alternatives().try(...attrSchemas)
@@ -59,12 +59,12 @@ const attributeSchema = Joi.alternatives().try(...attrSchemas)
 const entrySchema = Joi.object({
   acl: Joi.object().pattern(/./, aclSchema),
   read: Joi.array().items(Joi.string()).default([]),
-  attributes: Joi.object().pattern(/./, attributeSchema)
+  attributes: Joi.object().pattern(/./, attributeSchema),
 })
 
 const schema = Joi.object({
   '@main': Joi.string().required(),
-  '@imports': Joi.object().pattern(/./, Joi.string()).default({}) // TODO: validate path schema
+  '@imports': Joi.object().pattern(/./, Joi.string()).default({}), // TODO: validate path schema
 }).pattern(/./, entrySchema)
 
 const loadType = { // TODO: "steal" from parcel?
@@ -73,18 +73,18 @@ const loadType = { // TODO: "steal" from parcel?
   },
   node: async path => {
     return require(fs.realpathSync(path))
-  }
+  },
 }
 
-async function loadTreeRecursivly (srcStr) {
+async function loadTreeRecursivly(srcStr) {
   const [type, path] = srcStr.split(':')
 
   let contents = await loadType[type](path) // TODO: validation of type, read error catch
 
-  const { value, error } = schema.validate(contents)
+  const {value, error} = schema.validate(contents)
 
   if (error) {
-    console.log(require('util').inspect(error, { colors: true, depth: null }))
+    console.log(require('util').inspect(error, {colors: true, depth: null}))
     throw error
   }
 

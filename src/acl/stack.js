@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = (baseObj, dbm, cache = { [baseObj.id]: baseObj }, next) => {
+module.exports = (baseObj, dbm, cache = {[baseObj.id]: baseObj}, next) => {
   const dCache = [baseObj]
 
   const _dbmFetch = async (model, id) => {
@@ -36,6 +36,6 @@ module.exports = (baseObj, dbm, cache = { [baseObj.id]: baseObj }, next) => {
     dive: async depth => {
       const baseObj = await _fetch(depth)
       return module.exports(baseObj, dbm, cache) // there's never a next
-    }
+    },
   }
 }

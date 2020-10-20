@@ -1,6 +1,6 @@
 'use strict'
 
-const { L, S, iterateKeys } = require('../utils')
+const {L, S, iterateKeys} = require('../utils')
 const FJoi = require('fake-joi')
 
 module.exports = models => {

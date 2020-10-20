@@ -1,10 +1,12 @@
 {
   "extends": [
-    "oclif",
-    "aegir-standalone"
+    "ipfs",
+    "oclif"
   ],
   "rules": {
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "new-cap": "off",
+    "strict": "off"
   },
   "overrides": [
     {

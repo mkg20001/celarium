@@ -3,5 +3,6 @@
 module.exports = {
   number: require('./number'),
   string: require('./string'),
-  jsonb: require('./jsonb')
+  boolean: require('./boolean'),
+  jsonb: require('./jsonb'),
 }

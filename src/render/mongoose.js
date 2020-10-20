@@ -1,6 +1,6 @@
 'use strict'
 
-const { L, S, Joi, iterateKeys, iterateKeysToArstr } = require('../utils')
+const {L, S, Joi, iterateKeys, iterateKeysToArstr} = require('../utils')
 
 /*
 
@@ -34,7 +34,7 @@ module.exports = models => {
 
         return L('{ type: Array, item: mongoose.ObjectId }') // TODO: db relations
       }
-    }) /* TODO: ACLs */, { parent: { model: L('{ type: String }'), id: L('{ type: mongoose.ObjectId }') } }))})`)
+    }) /* TODO: ACLs */, {parent: {model: L('{ type: String }'), id: L('{ type: mongoose.ObjectId }')}}))})`)
 
     return L(`mongoose.model(${S(modelName)}, ${S(schema)})`)
   })

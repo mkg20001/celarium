@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = (baseUrl, extraHeaders, credentials) => {
-  const { fetch } = global.window ? (window.fetch ? window.fetch : require('whatwg-fetch')) : require('node-fetch') // eslint-disable-line node/no-unpublished-require
+  const {fetch} = global.window ? (window.fetch ? window.fetch : require('whatwg-fetch')) : require('node-fetch') // eslint-disable-line node/no-unpublished-require
 
   const req = async (url, method = 'GET', headers = {}, body) => {
     if (body) {
@@ -11,18 +11,18 @@ module.exports = (baseUrl, extraHeaders, credentials) => {
 
     Object.assign(headers, extraHeaders)
 
-    const res = await fetch(`${baseUrl}/${url}`, { credentials, method, headers, body })
+    const res = await fetch(`${baseUrl}/${url}`, {credentials, method, headers, body})
     const data = await res.json()
 
     if (res.status >= 400 || data.error) {
       const error = data.error ? `${data.error} (${res.status} ${res.statusText})` : `${res.status} ${res.statusText}`
-      throw Object.assign(new Error(`[/${url}] ${error}`), { url, status: res.status, statusText: res.statusText, apiError: data.error })
+      throw Object.assign(new Error(`[/${url}] ${error}`), {url, status: res.status, statusText: res.statusText, apiError: data.error})
     }
 
     return data
   }
 
-  const out = { structure }
+  const out = {structure}
 
   return out
 }

@@ -9,7 +9,7 @@ const expect = chai.expect
 
 const {
   generateTests,
-  generateCode
+  generateCode,
 } = require('./util')
 
 describe('db', () => {
@@ -27,7 +27,7 @@ describe('db', () => {
     it('board create', async () => {
       el = await stubDb.db.create('board', { // eslint-disable-line
         name: 'Test',
-        description: 'test'
+        description: 'test',
       })
 
       expect(el).to.have.property('name').that.is.equal('Test')
@@ -40,7 +40,7 @@ describe('db', () => {
     })
 
     it('board update', async () => {
-      await stubDb.db.setById('board', el.id, { name: 'TheTest' })
+      await stubDb.db.setById('board', el.id, {name: 'TheTest'})
 
       el = await stubDb.db.getById('board', el.id)
 
