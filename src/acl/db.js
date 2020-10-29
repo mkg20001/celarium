@@ -4,24 +4,24 @@
 
 const Stack = require('./stack')
 
-function matcher(mUser) {
+function matcher (mUser) {
   /*
   2 = exclude
   1 = include
   0 = no match
   */
-  return ({wildcard, user, not}) => {
+  return ({ wildcard, user, not }) => {
     const r = not ? 2 : 1
     if (wildcard || user === mUser) return r
     return 0
   }
 }
 
-async function resolveAclRef(aclBase, {wildcard, not, mode, depth, type, name}, stack) {
+async function resolveAclRef (aclBase, { wildcard, not, mode, depth, type, name }, stack) {
   if (wildcard) {
     return {
       wildcard: true,
-      not,
+      not
     }
   }
 
@@ -36,57 +36,57 @@ async function resolveAclRef(aclBase, {wildcard, not, mode, depth, type, name}, 
   let targetObj
 
   switch (mode) {
-  case 'prev': {
+    case 'prev': {
     // go back in stack by $depth
 
-    targetObj = await stack.fetch(depth)
-    newStack = stack.dive(depth)
-    break
-  }
-  case 'next': {
-    if (depth === 2) {
+      targetObj = await stack.fetch(depth)
+      newStack = stack.dive(depth)
+      break
+    }
+    case 'next': {
+      if (depth === 2) {
       // list object current object (used in remove clause of list)
       // targetObj = stack[0]
       // throw new Error('unimp')
-      targetObj = await stack.fetch(-1)
-    } else if (depth === 1) {
+        targetObj = await stack.fetch(-1)
+      } else if (depth === 1) {
       // self (our property)
-      targetObj = await stack.fetch(0) // isList ? stack[1] : stack[0]
-    } else {
-      throw new TypeError(depth)
+        targetObj = await stack.fetch(0) // isList ? stack[1] : stack[0]
+      } else {
+        throw new TypeError(depth)
+      }
+      break
     }
-    break
-  }
-  default: {
-    throw new TypeError(mode)
-  }
+    default: {
+      throw new TypeError(mode)
+    }
   }
 
   switch (type) {
-  case 'property': {
-    return targetObj.props[name]
-  }
-  case 'acl': {
-    return resolveAclRefs(aclBase, targetObj, targetObj.model, name, newStack)
-  }
-  default: {
-    throw new TypeError(type)
-  }
+    case 'property': {
+      return targetObj.props[name]
+    }
+    case 'acl': {
+      return resolveAclRefs(aclBase, targetObj, targetObj.model, name, newStack)
+    }
+    default: {
+      throw new TypeError(type)
+    }
   }
 }
 
-async function recursiveResolve(aclBase, list, stack) {
+async function recursiveResolve (aclBase, list, stack) {
   const res = await Promise.all(list.map(entry => resolveAclRef(aclBase, entry, stack)))
   return res.reduce((out, el) => (out.concat(Array.isArray(el) ? el : [el])), []) // flatten
 }
 
-function resolveAclRefs(aclBase, targetObj, modelName, listName, stack) {
+function resolveAclRefs (aclBase, targetObj, modelName, listName, stack) {
   const list = getListAclsFor(aclBase, targetObj, modelName, listName, stack)
   // const acl = dba.getAclLists(obj, model)
   return recursiveResolve(aclBase, list, stack)
 }
 
-function getPropertyAclsFor(aclBase, modelName, attrName, action) {
+function getPropertyAclsFor (aclBase, modelName, attrName, action) {
   console.log(aclBase, modelName, attrName, action)
   const attr = aclBase[modelName] && aclBase[modelName].attrs[attrName]
   console.log('foundAttr', attr)
@@ -102,7 +102,7 @@ function getPropertyAclsFor(aclBase, modelName, attrName, action) {
   return (attr[action] || []).concat(aclBase[modelName].base[action])
 }
 
-function getListAclsFor(aclBase, targetObj, stack, modelName, listName) {
+function getListAclsFor (aclBase, targetObj, stack, modelName, listName) {
   const list = aclBase[modelName] && aclBase[modelName].lists[listName]
 
   if (!list) {
@@ -134,7 +134,7 @@ module.exports = (DBM, aclBase) => {
       *
       return res.map(matcher(user)).reduce((a, b) => a > b ? a : b, 0)
     } */
-    async validateAcls(obj, user, modelName, model, attrName, action, listAction, listNextId) {
+    async validateAcls (obj, user, modelName, model, attrName, action, listAction, listNextId) {
       return true // TODO: implement later
 
       const stack = Stack(obj, DBM, null, listNextId)
@@ -149,6 +149,6 @@ module.exports = (DBM, aclBase) => {
       */
 
       return res.map(matcher(user)).reduce((a, b) => a > b ? a : b, 0)
-    },
+    }
   }
 }

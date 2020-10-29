@@ -5,7 +5,7 @@ const validator = require('./validator')
 const compiler = require('./compiler')
 const render = require('./render')
 
-module.exports = async (src, outFolder, config = {api: 'hapi', db: 'mongoose', beautify: true}) => {
+module.exports = async (src, outFolder, config = { api: 'hapi', db: 'mongoose', beautify: true }) => {
   const contents = await loader(src)
 
   validator(contents)
@@ -16,7 +16,7 @@ module.exports = async (src, outFolder, config = {api: 'hapi', db: 'mongoose', b
     api: require('./render/' + config.api),
     base: require('./render/base'),
     client: require('./render/client'),
-    joi: require('./render/joi'),
+    joi: require('./render/joi')
   }, config.beautify)
 
   await render(compiledFiles, outFolder)

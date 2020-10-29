@@ -1,6 +1,6 @@
 'use strict'
 
-const {L, S, Joi, iterateKeysToArstr} = require('../utils')
+const { L, S, Joi, iterateKeysToArstr } = require('../utils')
 
 // const Stack = require('celarium/src/acl/stack')
 
@@ -10,7 +10,7 @@ module.exports = (models, config) => {
       return L(`server.route(${S(Object.assign({
         method,
         path,
-        handler,
+        handler
       }, options))})`)
     }
 
@@ -136,12 +136,12 @@ module.exports = (models, config) => {
               const {payload} = h
 
               ${
-  false ? // TODO: add isSymbolic
-    `
+  false // TODO: add isSymbolic
+    ? `
                 // if:symbolic = payload should be id, added to list
                 await DBM.db.getById(${S(subType)}, payload) // check if exists
-                ` :
-    `
+                `
+    : `
                 // if:non-symbolic = payload should be object, created with this as parent, added to list
 
                 // TODO: recursivly validate acls
@@ -171,8 +171,8 @@ module.exports = (models, config) => {
               }
 
               ${
-  false ? // TODO: add isSymbolic
-    '' : `
+  false // TODO: add isSymbolic
+    ? '' : `
                 await DBM.db.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
                 await DBM.db.delById(${S(subType)}, rId)
                 `

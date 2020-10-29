@@ -1,6 +1,6 @@
 'use strict'
 
-const {L, S, Joi, iterateKeys} = require('../utils')
+const { L, S, Joi, iterateKeys } = require('../utils')
 
 module.exports = config => {
   return L(`'use strict'

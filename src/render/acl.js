@@ -1,6 +1,6 @@
 'use strict'
 
-const {L, S, iterateKeys} = require('../utils')
+const { L, S, iterateKeys } = require('../utils')
 
 module.exports = models => {
   const acls = iterateKeys(models, (modelName, model) => {
@@ -9,15 +9,15 @@ module.exports = models => {
         return list
       }),
       base: {
-        read: model.read,
+        read: model.read
       },
       attrs: iterateKeys(model.attributes, (attrName, attr) => {
         if (attr.isList) {
-          return {append: attr.append, delete: attr.delete, read: attr.read}
+          return { append: attr.append, delete: attr.delete, read: attr.read }
         }
 
-        return {modify: attr.modify, read: attr.read}
-      }),
+        return { modify: attr.modify, read: attr.read }
+      })
     }
   })
 

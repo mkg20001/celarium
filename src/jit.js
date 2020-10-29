@@ -8,13 +8,13 @@ const celarium = require('.')
 const mkdirp = require('mkdirp').sync
 const rimraf = require('rimraf').sync
 
-function makeTemp() {
+function makeTemp () {
   const tempPath = path.join(os.tmpdir(), 'celarium', String(Math.random()))
   mkdirp(tempPath)
 
   return {
     tempPath,
-    cleanup: () => rimraf(tempPath),
+    cleanup: () => rimraf(tempPath)
   }
 }
 
@@ -40,7 +40,7 @@ module.exports = (TMPDIR = os.tmpdir()) => {
     return load(...a)
   }
 
-  async function generateCode(inputModel, config = {db: 'stub-db', api: 'hapi'}) {
+  async function generateCode (inputModel, config = { db: 'stub-db', api: 'hapi' }) {
     const temp = makeTemp()
 
     await celarium(inputModel, temp.tempPath, config)
@@ -48,7 +48,7 @@ module.exports = (TMPDIR = os.tmpdir()) => {
     return {
       codePath: temp.tempPath,
       cleanup: temp.cleanup,
-      load: mod => require(path.join(temp.tempPath, `${mod}.js`)),
+      load: mod => require(path.join(temp.tempPath, `${mod}.js`))
     }
   }
 
@@ -57,6 +57,6 @@ module.exports = (TMPDIR = os.tmpdir()) => {
       const generated = await generateCode(inputModel, buildConfig)
       return generated.load('base')(appConfig)
     },
-    compile: generateCode,
+    compile: generateCode
   }
 }

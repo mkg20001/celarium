@@ -1,6 +1,6 @@
 'use strict'
 
-const {L, S, Joi, iterateKeys, iterateKeysToArstr} = require('../utils')
+const { L, S, Joi, iterateKeys, iterateKeysToArstr } = require('../utils')
 
 /*
 
