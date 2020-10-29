@@ -1,7 +1,15 @@
 'use strict'
 
 module.exports = (baseUrl, extraHeaders, credentials) => {
-  const { fetch } = global.window ? (window.fetch ? window.fetch : require('whatwg-fetch')) : require('node-fetch') // eslint-disable-line node/no-unpublished-require
+  let fetch
+  if (global.window) {
+    if (!window.fetch) {
+      require('whatwg-fetch')
+    }
+    fetch = window.fetch
+  } else {
+    fetch = require('node-fetch')
+  }
 
   const req = async (url, method = 'GET', headers = {}, body) => {
     if (body) {
