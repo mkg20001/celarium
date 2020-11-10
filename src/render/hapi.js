@@ -15,7 +15,7 @@ module.exports = (models, config) => {
     }
 
     return L(`
-      // TODO: log acl violations
+      // TODO: audit log acl violations
 
       server.route({
         method: 'GET',

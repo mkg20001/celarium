@@ -36,7 +36,16 @@ const listSchema = Joi.object({
   type: Joi.string().pattern(/\[\]$/).required(),
   append: Joi.array().items(Joi.string()).default([]),
   delete: Joi.array().items(Joi.string()).default([])
+})
 
+const baseSingle = {
+  modify: Joi.array().items(Joi.string()).default([]),
+  notNull: Joi.boolean().default(false)
+}
+
+const genericSchema = Joi.object({
+  type: Joi.string().pattern(/./).required(),
+  ...baseSingle
 })
 
 const types = require('./types')
@@ -44,14 +53,14 @@ const types = require('./types')
 const typeSchemas = Object.keys(types).map(type => {
   return Object.assign({
     type: Joi.string().valid(type).required(),
-    modify: Joi.array().items(Joi.string()).default([]),
-    notNull: Joi.boolean().default(false)
+    ...baseSingle
   }, types[type].parameters)
 })
 
 const attrSchemas = [
   listSchema,
-  ...typeSchemas
+  ...typeSchemas,
+  genericSchema
 ]
 
 const attributeSchema = Joi.alternatives().try(...attrSchemas)

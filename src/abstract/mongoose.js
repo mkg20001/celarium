@@ -3,20 +3,20 @@
 const mongoose = require('mongoose')
 const Boom = require('@hapi/boom')
 
-function mapErrorAndRethrow(error) {
+function mapErrorAndRethrow (error) {
   const [type] = String(error).split(':')
   switch (true) {
-  case type === 'CastError': {
-    throw Boom.badRequest(error)
-  }
+    case type === 'CastError': {
+      throw Boom.badRequest(error)
+    }
 
-  default: {
-    throw error
-  }
+    default: {
+      throw error
+    }
   }
 }
 
-async function wrapRethrow(prom) {
+async function wrapRethrow (prom) {
   try {
     return await prom
   } catch (error) {
@@ -24,7 +24,7 @@ async function wrapRethrow(prom) {
   }
 }
 
-function remap(i, modelName) {
+function remap (i, modelName) {
   /*
 
   normalized layout:
@@ -61,14 +61,14 @@ function remap(i, modelName) {
 
 module.exports = config => {
   const auditModel = {
-    timestamp: {type: Date, required: true},
-    user: {type: mongoose.ObjectId, required: true},
-    model: {type: String, required: true},
-    type: {type: String, required: true},
-    object: {type: mongoose.ObjectId, required: true},
-    targetKey: {type: String, required: true},
-    operation: {type: String, required: true},
-    parameter: {type: String, required: true}, // kinda catch-all since we're storing both ids and actual parameters here
+    timestamp: { type: Date, required: true },
+    user: { type: mongoose.ObjectId, required: true },
+    model: { type: String, required: true },
+    type: { type: String, required: true },
+    object: { type: mongoose.ObjectId, required: true },
+    targetKey: { type: String, required: true },
+    operation: { type: String, required: true },
+    parameter: { type: String, required: true } // kinda catch-all since we're storing both ids and actual parameters here
   }
 
   const Audit = mongoose.model('audit', new mongoose.Schema(auditModel))
@@ -81,9 +81,9 @@ module.exports = config => {
       return m
     },
     get: async (model, id) => {
-      return remap(await wrapRethrow(model.findOne({_id: id}), model.__name))
+      return remap(await wrapRethrow(model.findOne({ _id: id }), model.__name))
     },
-    async addAuditEntry(user, model, type, object, targetKey, operation, parameter) {
+    async addAuditEntry (user, model, type, object, targetKey, operation, parameter) {
       // User added xyz to group n on object (user, model, type=acl, object, targetKey=n, operation=add, parameter=xyz) (type.operation=acl.add)
       // User remove xyz from list d on object i (user, model, type=modify, object, targetKey=d, operation=listRemove, parameter=xyz) (modify.listRemove)
 
@@ -95,23 +95,23 @@ module.exports = config => {
         object,
         targetKey,
         operation,
-        parameter,
+        parameter
       })
 
       const res = await obj.save()
 
       return res._id
     },
-    async create(Model, contents, creator, parent) {
+    async create (Model, contents, creator, parent) {
       const m = new Model(contents)
 
       const res = await wrapRethrow(m.save())
 
       return res._id
     },
-    async set(model, targetId, updateKV) {
+    async set (model, targetId, updateKV) {
       // TODO: use direct queries instead of magic object
-      const self = await model.findOne({_id: targetId})
+      const self = await model.findOne({ _id: targetId })
 
       for (const key in updateKV) { // eslint-disable-line guard-for-in
         self[key] = updateKV[key]
@@ -119,19 +119,29 @@ module.exports = config => {
 
       return remap(await wrapRethrow(self.save()))
     },
-    async del(model, id) {
+    async del (model, id) {
       // TODO: implement
+    },
+    async query (model, parent, query) {
+      // TODO: add
+      return []
+    },
+    native (model) {
+      return model
+    },
+    fromNative (model, results) {
+      return results.map(remap)
     },
 
     connect: () => {
       return mongoose.connect(config.url, {
         useNewUrlParser: true,
-        useUnifiedTopology: true,
+        useUnifiedTopology: true
       })
     },
     disconnect: () => {
       return mongoose.disconnect()
-    },
+    }
   }
 
   return S
