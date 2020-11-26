@@ -44,8 +44,8 @@ module.exports = (abs, ACL) => {
     if (!modelCache[modelName]) {
       modelCache[modelName] = abs.getModel(modelName)
     }
-
-    return await modelCache[modelName]
+    const res = await modelCache[modelName]
+    return res
   }
 
   const DBM = {
@@ -64,7 +64,7 @@ module.exports = (abs, ACL) => {
         return out
       },
       async getById (modelName, id) {
-        const res = await abs.get(await resolveModel(modelName), { id })
+        const res = await abs.get(await resolveModel(modelName), id)
 
         return Pandemonica(res, abs, await resolveModel(modelName))
       },
