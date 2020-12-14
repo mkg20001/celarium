@@ -1,6 +1,6 @@
 'use strict'
 
-const { L, S, Joi, iterateKeysToArstr } = require('../utils')
+const { L, S, Joi, iterateKeysToArstr, C } = require('../utils')
 
 // const Stack = require('celarium/src/acl/stack')
 
@@ -35,7 +35,7 @@ module.exports = (models, config) => {
     }
 
     const objGetById = model => {
-      return `const obj = await DBM.db.getById(${S(model)}, h.params.id)`
+      return `const obj = await jsapi.get${C(model)}(h.params.id)`
     }
 
     const objSetById = (model, d) => {
@@ -69,7 +69,7 @@ module.exports = (models, config) => {
       }`
     }
 
-    const getPayload = 'const {payload} = h'
+    const getPayload = 'const { payload } = h'
 
     const validatePayload = (model, type) => {
       return `for (const key in payload) {
@@ -149,10 +149,10 @@ module.exports = (models, config) => {
                 await DBM.db.getById(${S(subType)}, payload) // check if exists`
       }
       return postRoute(
-        S(`/${model}/{id}/${attr}/append`),
+        `'/${model}/{id}/${attr}/append'`,
         handlerBoiler(`
           ${objGetById(model)}
-          ${validateObjKey(model, S(attr), S('append'), 'throw Boom.unauthorized()')}
+          ${validateObjKey(model, S(attr), "'append'", 'throw Boom.unauthorized()')}
           ${getPayload}
           ${symbolSpec}
           ${objSetById(model, `{[${S(attr)}]: (obj[${S(attr)}] || []).concat([newId])}`)}
@@ -229,7 +229,9 @@ const Boom = require('@hapi/boom')
 const Joi = require('joi')
 
 module.exports = async (config, DBM) => {
-  const {validateAcls} = DBM
+  const { validateAcls } = DBM
+  const jsapi = require('./jsapi')
+  jsapi.init(config, DBM)
   const accessLog = false // TODO: make configurable?
 
   const server = new Hapi.Server({
