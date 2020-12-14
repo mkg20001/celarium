@@ -230,8 +230,7 @@ const Joi = require('joi')
 
 module.exports = async (config, DBM) => {
   const { validateAcls } = DBM
-  const jsapi = require('./jsapi')
-  jsapi.init(config, DBM)
+  const jsapi = require('./jsapi')(config, DBM)
   const accessLog = false // TODO: make configurable?
 
   const server = new Hapi.Server({
