@@ -1,7 +1,7 @@
 /* eslint-disable max-params */
 'use strict'
 
-const { L, S, Joi, iterateKeysToArstr, C } = require('../utils') // eslint-disable-line no-unused-vars
+const { L, S, Joi, iterateKeysToArstr, C, Pad } = require('../utils') // eslint-disable-line no-unused-vars
 
 // const Stack = require('celarium/src/acl/stack')
 
@@ -53,52 +53,52 @@ module.exports = (models, config) => {
       return `return obj[${S(attr)}]`
     }
 
-    const logAccess = (model, key, type, op, param) => {
+    const logAccess = (model, key, type, op, param, depth = 0) => {
       return `if (accessLog) {
-          // await DBM.auditLog.addEntry(getUser(h), ${S(model)}, ${type}, h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
-          await DBM.auditLog.addEntry(getUser(h), ${S(model)}, ${type}, h.params.id, ${key}, ${S(op)}, ${param}) // (user, model, type, object, targetKey, operation, parameter)
-        }`
+${Pad('', depth + 1)}// await DBM.auditLog.addEntry(getUser(h), '${model}', '${type}', h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
+${Pad('', depth + 1)}await DBM.auditLog.addEntry(getUser(h), '${model}', '${type}', h.params.id, ${key}, '${op}', ${param}) // (user, model, type, object, targetKey, operation, parameter)
+${Pad('', depth)}}`
     }
 
-    const validateObjKey = (model, key, type, action, obj = 'obj') => {
+    const validateObjKey = (model, key, type, action, depth = 0, obj = 'obj') => {
       return `// (obj, user, modelName, model, attrName, action, listAction, listNextId)
-        if (!await validateAcls(${obj}, getUser(h), '${model}', ${key}, '${type}')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
-          ${action}
-        }`
+${Pad('', depth)}if (!await validateAcls(${obj}, getUser(h), '${model}', ${key}, '${type}')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+${Pad('', depth + 1)}${action}
+${Pad('', depth)}}`
     }
 
-    const validateObjKeys = (model, type) => {
+    const validateObjKeys = (model, type, depth = 0) => {
       return `for (const key in obj) {
-        ${validateObjKey(model, 'key', type, 'delete obj[key]')} else ${logAccess(model, 'key', type, "'null?'", "'null?'")}
-      }`
+${Pad('', depth + 1)}${validateObjKey(model, 'key', type, 'delete obj[key]', depth + 1)} else ${logAccess(model, 'key', type, 'null?', "'null?'", depth + 1)}
+${Pad('', depth)}}`
     }
 
     const getPayload = 'const { payload } = h'
 
-    const validatePayload = (model, type) => {
+    const validatePayload = (model, type, depth = 0) => {
       return `for (const key in payload) {
-        ${validateObjKey(model, 'key', type, 'throw Boom.unauthorized(\'Not authorised for key \' + JSON.stringify(key))')}
-      }`
+${Pad('', depth + 1)}${validateObjKey(model, 'key', type, 'throw Boom.unauthorized(\'Not authorised for key \' + JSON.stringify(key))', depth + 1)}
+${Pad('', depth)}}`
     }
 
     const modelGetRoute = model => {
       return getRoute(
-        S(`/${model}/{id}`),
+        `'/${model}/{id}'`,
         handlerBoiler(`
       // TODO: validate request
       ${objGetById(model)}
-      ${validateObjKeys(model, 'access')}
+      ${validateObjKeys(model, 'access', 3)}
       ${retObj}`), false)
     }
 
     const modelPatchRoute = model => {
       return patchRoute(
-        S(`/${model}/{id}`),
+        `'/${model}/{id}'`,
         handlerBoiler(`
       // TODO: validate request
       ${objGetById(model)}
       ${getPayload}
-      ${validatePayload(model, 'modify')}
+      ${validatePayload(model, 'modify', 3)}
       ${objSetById(model, 'payload')}
       ${retOK}`), false)
     }
@@ -117,114 +117,107 @@ module.exports = (models, config) => {
 
     const modelGetListAttrRoute = (model, attr, subType) => {
       return getRoute(
-        S(`/${model}/{id}/${attr}`),
+        `'/${model}/{id}/${attr}'`,
         // FIXME: this should not be this long!
         handlerBoiler(`
-          ${objGetById(model)}
-          // TODO: access, etc per key
-          ${validateObjKeys(model, 'modify')}
-          ${logAccess(model, S(attr), "'access'", "'null?'", "'null?'")}
-          // THIS IS ABSOLUTE GARBAGE AND SHOULD BE REPLACED ASAP
-          // ALSO DOESN'T DO ACL
-        
-          // instead we should query by parent for non-sym and check ACLs during query
-          // for sym no idea
-        
-          const startAt = h.query.limit * (h.query.page - 1)
-          const endAt = h.query.limit * h.query.page
-          const total = obj[${S(attr)}].length
-        
-          let res = await Promise.all(obj[${S(attr)}].slice(startAt, endAt).map(id => DBM.db.getById(${S(subType)}, id)))
-        
-          await Promise.all(res.map(async obj => {
-            ${validateObjKeys(subType, 'access')}
-          }))
-        
-          return res`),
-        configOption)
+      ${objGetById(model)}
+      // TODO: access, etc per key
+      ${validateObjKeys(model, 'modify', 3)}
+      ${logAccess(model, S(attr), 'access', 'null?', "'null?'", 3)}
+      // THIS IS ABSOLUTE GARBAGE AND SHOULD BE REPLACED ASAP
+      // ALSO DOESN'T DO ACL
+
+      // instead we should query by parent for non-sym and check ACLs during query
+      // for sym no idea
+
+      const startAt = h.query.limit * (h.query.page - 1)
+      const endAt = h.query.limit * h.query.page
+      const total = obj[${S(attr)}].length
+
+      let res = await Promise.all(obj[${S(attr)}].slice(startAt, endAt).map(id => DBM.db.getById(${S(subType)}, id)))
+
+      await Promise.all(res.map(async obj => {
+        ${validateObjKeys(subType, 'access', 4)}
+      }))
+      return res`), configOption)
     }
 
     const modelAttrAppendRoute = (model, attr, subType) => {
       let symbolSpec = `// if:non-symbolic = payload should be object, created with this as parent, added to list
-                // TODO: recursivly validate acls
-                const newId = (await DBM.db.create(${S(subType)}, payload, getUser(h))).id`
+      // TODO: recursivly validate acls
+      const newId = (await DBM.db.create(${S(subType)}, payload, getUser(h))).id`
       if (isSymbolic(subType)) {
         symbolSpec = `// if:symbolic = payload should be id, added to list
-                await DBM.db.getById(${S(subType)}, payload) // check if exists`
+      await DBM.db.getById(${S(subType)}, payload) // check if exists`
       }
       return postRoute(
         `'/${model}/{id}/${attr}/append'`,
         handlerBoiler(`
-          ${objGetById(model)}
-          ${validateObjKey(model, S(attr), 'append', 'throw Boom.unauthorized()')}
-          ${getPayload}
-          ${symbolSpec}
-          ${objSetById(model, `{[${S(attr)}]: (obj[${S(attr)}] || []).concat([newId])}`)}
-          ${logAccess(model, S(attr), "'modify'", "'null?'", "'null?'")}
-        return newId`), false)
+      ${objGetById(model)}
+      ${validateObjKey(model, S(attr), 'append', 'throw Boom.unauthorized()', 3)}
+      ${getPayload}
+      ${symbolSpec}
+      ${objSetById(model, `{ [${S(attr)}]: (obj[${S(attr)}] || []).concat([newId]) }`)}
+      ${logAccess(model, S(attr), 'modify', 'null?', "'null?'", 3)}
+      return newId`), false)
     }
 
     const modelAttrRemoveRoute = (model, attr, subType) => {
       // this accepts an id to remove. for non-sym it also removes the object from db (or rather disassociates it ala soft-delete - but we should leave this to the user FIXME)
       let symbolSepc = `await DBM.db.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
-                await DBM.db.delById(${S(subType)}, rId)` // TODO: add if Symbolic
+      await DBM.db.delById(${S(subType)}, rId)` // TODO: add if Symbolic
       if (isSymbolic(subType)) {
         symbolSepc = ''
       }
       return postRoute(
-        S(`/${model}/{id}/${attr}/remove`),
+        `'/${model}/{id}/${attr}/remove'`,
         handlerBoiler(`
-          ${objGetById(model)}
-          const rId = h.payload
-          const rObj = await DBM.db.getById(${S(subType)}, rId)
-          ${validateObjKey(model, S(attr), 'remove', 'throw Boom.unauthorized()', 'rObj')}
-          ${symbolSepc}
-          ${logAccess(model, S(attr), 'modify', 'remove', 'rId')}
-          ${objSetById(model, `{ [${S(attr)}]: obj[${S(attr)}].filter(id => id !== rId) }`)}
-          ${retOK}`), false)
+      ${objGetById(model)}
+      const rId = h.payload
+      const rObj = await DBM.db.getById(${S(subType)}, rId)
+      ${validateObjKey(model, S(attr), 'remove', 'throw Boom.unauthorized()', 3, 'rObj')}
+      ${symbolSepc}
+      ${logAccess(model, S(attr), 'modify', 'remove', 'rId', 3)}
+      ${objSetById(model, `{ [${S(attr)}]: obj[${S(attr)}].filter(id => id !== rId) }`)}
+      ${retOK}`), false)
     }
 
     const modelAttrGetRoute = (model, attr) => {
       return getRoute(
         `'/${model}/{id}/${attr}'`,
         handlerBoiler(`
-        ${objGetById(model)}
-        ${validateObjKey(model, S(attr), 'access', 'throw Boom.unauthorized()')}
-        ${logAccess(model, S(attr), "'access'", 'null', 'null')}
-        ${retAttr(attr)}`), false)
+      ${objGetById(model)}
+      ${validateObjKey(model, S(attr), 'access', 'throw Boom.unauthorized()', 3)}
+      ${logAccess(model, S(attr), 'access', 'null', 'null', 3)}
+      ${retAttr(attr)}`), false)
     }
 
     const modelAttrPostRoute = (model, attr) => {
       return postRoute(
         `'/${model}/{id}/${attr}'`,
         handlerBoiler(`
-          ${objGetById(model)}
-          ${validateObjKey(model, S(attr), 'modify', 'throw Boom.unauthorized()')}
-          ${logAccess(model, S(attr), "'modify'", 'null', 'null')}
-          ${objSetById(model, `{[${S(attr)}]: h.payload}`)}
-          ${retOK}`), false)
+      ${objGetById(model)}
+      ${validateObjKey(model, S(attr), 'modify', 'throw Boom.unauthorized()', 3)}
+      ${logAccess(model, S(attr), 'modify', 'null', 'null', 3)}
+      ${objSetById(model, `{ [${S(attr)}]: h.payload }`)}
+      ${retOK}`), false)
     }
 
     const modelAttrRoutes = (modelName, attributes) => {
       return S(iterateKeysToArstr(attributes, (attrName, attr) => {
         if (attr.isList) {
           const subType = attr.typeName // we already have that loaded somewhere else, so no need to pull again
-          return L(`
-            ${modelGetListAttrRoute(modelName, attrName, subType)}
-            ${modelAttrAppendRoute(modelName, attrName, subType)}
-            ${modelAttrRemoveRoute(modelName, attrName, subType)}`)
+          return L(`${modelGetListAttrRoute(modelName, attrName, subType)}${modelAttrAppendRoute(modelName, attrName, subType)}${modelAttrRemoveRoute(modelName, attrName, subType)}`)
         }
-        return L(`
-            ${modelAttrGetRoute(modelName, attrName)}
-            ${modelAttrPostRoute(modelName, attrName)}`)
+        return L(`${modelAttrGetRoute(modelName, attrName)}
+${modelAttrPostRoute(modelName, attrName)}`)
       }))
     }
 
-    return L(`
-      // TODO: audit log acl violations
-      ${modelGetRoute(modelName)}
-      ${modelPatchRoute(modelName)}
-      ${modelAttrRoutes(modelName, model.attributes)}`)
+    return L(`// TODO: audit log acl violations
+${modelGetRoute(modelName)}
+${modelPatchRoute(modelName)}
+${modelAttrRoutes(modelName, model.attributes)}`)
   })
 
   return L(`'use strict'
