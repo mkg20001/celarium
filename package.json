@@ -54,7 +54,7 @@
     "rimraf": "^3.0.2"
   },
   "devDependencies": {
-    "@hapi/hapi": "^20.0.1",
+    "@hapi/hapi": "^20.0.3",
     "eslint": "*",
     "eslint-config-aegir-standalone": "*",
     "eslint-config-ipfs": "*",
@@ -62,11 +62,11 @@
     "hapi-pino": "^8.3.0",
     "mkgs-tool": "^0.1.14",
     "mocha": "*",
-    "mongoose": "^5.10.11",
+    "mongoose": "^5.11.8",
     "node-fetch": "^2.6.1",
     "nyc": "*",
     "pino-pretty": "^4.3.0",
-    "whatwg-fetch": "^3.4.1"
+    "whatwg-fetch": "^3.5.0"
   },
   "engines": {
     "node": ">=10.0.0"
