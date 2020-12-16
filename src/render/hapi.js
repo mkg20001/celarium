@@ -1,11 +1,15 @@
+/* eslint-disable max-params */
 'use strict'
 
-const { L, S, Joi, iterateKeysToArstr, C } = require('../utils')
+const { L, S, Joi, iterateKeysToArstr, C } = require('../utils') // eslint-disable-line no-unused-vars
 
 // const Stack = require('celarium/src/acl/stack')
 
 module.exports = (models, config) => {
   const routes = iterateKeysToArstr(models, (modelName, model) => {
+    const isSymbolic = obj => {
+      return false // TODO: implement isSymbolic
+    }
     const route = (method, path, handler, options) => {
       let o = ''
       if (options) {
@@ -43,7 +47,7 @@ module.exports = (models, config) => {
     }
 
     const retObj = 'return obj'
-    const retOK = 'return {ok: true}'
+    const retOK = 'return { ok: true }'
 
     const retAttr = attr => {
       return `return obj[${S(attr)}]`
@@ -52,13 +56,13 @@ module.exports = (models, config) => {
     const logAccess = (model, key, type, op, param) => {
       return `if (accessLog) {
           // await DBM.auditLog.addEntry(getUser(h), ${S(model)}, ${type}, h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
-          await DBM.auditLog.addEntry(getUser(h), ${S(model)}, ${type}, h.params.id, ${key}, ${op}, ${param}) // (user, model, type, object, targetKey, operation, parameter)
+          await DBM.auditLog.addEntry(getUser(h), ${S(model)}, ${type}, h.params.id, ${key}, ${S(op)}, ${param}) // (user, model, type, object, targetKey, operation, parameter)
         }`
     }
 
-    const validateObjKey = (model, key, type, action) => {
+    const validateObjKey = (model, key, type, action, obj = 'obj') => {
       return `// (obj, user, modelName, model, attrName, action, listAction, listNextId)
-        if (!await validateAcls(obj, getUser(h), ${S(model)}, ${key}, ${type})) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+        if (!await validateAcls(${obj}, getUser(h), '${model}', ${key}, '${type}')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
           ${action}
         }`
     }
@@ -83,7 +87,7 @@ module.exports = (models, config) => {
         handlerBoiler(`
       // TODO: validate request
       ${objGetById(model)}
-      ${validateObjKeys(model, S('access'))}
+      ${validateObjKeys(model, 'access')}
       ${retObj}`), false)
     }
 
@@ -94,7 +98,7 @@ module.exports = (models, config) => {
       // TODO: validate request
       ${objGetById(model)}
       ${getPayload}
-      ${validatePayload(model, S('modify'))}
+      ${validatePayload(model, 'modify')}
       ${objSetById(model, 'payload')}
       ${retOK}`), false)
     }
@@ -118,7 +122,7 @@ module.exports = (models, config) => {
         handlerBoiler(`
           ${objGetById(model)}
           // TODO: access, etc per key
-          ${validateObjKeys(model, S('modify'))}
+          ${validateObjKeys(model, 'modify')}
           ${logAccess(model, S(attr), "'access'", "'null?'", "'null?'")}
           // THIS IS ABSOLUTE GARBAGE AND SHOULD BE REPLACED ASAP
           // ALSO DOESN'T DO ACL
@@ -133,7 +137,7 @@ module.exports = (models, config) => {
           let res = await Promise.all(obj[${S(attr)}].slice(startAt, endAt).map(id => DBM.db.getById(${S(subType)}, id)))
         
           await Promise.all(res.map(async obj => {
-            ${validateObjKeys(subType, S('access'))}
+            ${validateObjKeys(subType, 'access')}
           }))
         
           return res`),
@@ -143,8 +147,8 @@ module.exports = (models, config) => {
     const modelAttrAppendRoute = (model, attr, subType) => {
       let symbolSpec = `// if:non-symbolic = payload should be object, created with this as parent, added to list
                 // TODO: recursivly validate acls
-                const newId = (await DBM.db.create(${S(subType)}, payload, getUser(h))).id` // TODO: add isSymbolic
-      if (false) {
+                const newId = (await DBM.db.create(${S(subType)}, payload, getUser(h))).id`
+      if (isSymbolic(subType)) {
         symbolSpec = `// if:symbolic = payload should be id, added to list
                 await DBM.db.getById(${S(subType)}, payload) // check if exists`
       }
@@ -152,7 +156,7 @@ module.exports = (models, config) => {
         `'/${model}/{id}/${attr}/append'`,
         handlerBoiler(`
           ${objGetById(model)}
-          ${validateObjKey(model, S(attr), "'append'", 'throw Boom.unauthorized()')}
+          ${validateObjKey(model, S(attr), 'append', 'throw Boom.unauthorized()')}
           ${getPayload}
           ${symbolSpec}
           ${objSetById(model, `{[${S(attr)}]: (obj[${S(attr)}] || []).concat([newId])}`)}
@@ -161,9 +165,10 @@ module.exports = (models, config) => {
     }
 
     const modelAttrRemoveRoute = (model, attr, subType) => {
+      // this accepts an id to remove. for non-sym it also removes the object from db (or rather disassociates it ala soft-delete - but we should leave this to the user FIXME)
       let symbolSepc = `await DBM.db.setById(${S(subType)}, rId, { parent: null }, getUser(h)) // if not-symbolic
-                await DBM.db.delById(${S(subType)}, rId)` // TODO: add isSymbolic
-      if (false) {
+                await DBM.db.delById(${S(subType)}, rId)` // TODO: add if Symbolic
+      if (isSymbolic(subType)) {
         symbolSepc = ''
       }
       return postRoute(
@@ -172,7 +177,7 @@ module.exports = (models, config) => {
           ${objGetById(model)}
           const rId = h.payload
           const rObj = await DBM.db.getById(${S(subType)}, rId)
-          ${validateObjKey(model, S(attr), 'remove', 'throw Boom.unauthorized()')}
+          ${validateObjKey(model, S(attr), 'remove', 'throw Boom.unauthorized()', 'rObj')}
           ${symbolSepc}
           ${logAccess(model, S(attr), 'modify', 'remove', 'rId')}
           ${objSetById(model, `{ [${S(attr)}]: obj[${S(attr)}].filter(id => id !== rId) }`)}
@@ -184,7 +189,7 @@ module.exports = (models, config) => {
         `'/${model}/{id}/${attr}'`,
         handlerBoiler(`
         ${objGetById(model)}
-        ${validateObjKey(model, S(attr), "'access'", 'throw Boom.unauthorized()')}
+        ${validateObjKey(model, S(attr), 'access', 'throw Boom.unauthorized()')}
         ${logAccess(model, S(attr), "'access'", 'null', 'null')}
         ${retAttr(attr)}`), false)
     }
@@ -194,7 +199,7 @@ module.exports = (models, config) => {
         `'/${model}/{id}/${attr}'`,
         handlerBoiler(`
           ${objGetById(model)}
-          ${validateObjKey(model, S(attr), "'modify'", 'throw Boom.unauthorized()')}
+          ${validateObjKey(model, S(attr), 'modify', 'throw Boom.unauthorized()')}
           ${logAccess(model, S(attr), "'modify'", 'null', 'null')}
           ${objSetById(model, `{[${S(attr)}]: h.payload}`)}
           ${retOK}`), false)
