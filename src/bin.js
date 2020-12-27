@@ -38,12 +38,17 @@ require('yargs') // eslint-disable-line
         type: 'boolean',
         default: false
       })
-  }, argv => {
-    return generate(argv.schema, argv.out, {
-      db: argv.db,
-      api: argv.api,
-      beautify: argv.beautify
-    })
+  }, async argv => {
+    try {
+      await generate(argv.schema, argv.out, {
+        db: argv.db,
+        api: argv.api,
+        beautify: argv.beautify
+      })
+    } catch (error) {
+      console.error(require('util').inspect(error, { colors: true, depth: null }))
+      process.exit(2)
+    }
   })
   .option('verbose', {
     alias: 'v',

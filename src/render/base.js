@@ -16,18 +16,18 @@ module.exports = async (config) => {
 
   config = value
 
-  const DBM = await (require('./db')(config.db))
+  const DBM = await (require('./db')(config.db, require('./acl')))
   const API = await (require('./api')(config.api, DBM))
 
   return {
     DBM,
     API,
     async start () {
-      await DBM.connect()
+      await DBM.control.connect()
       await API.start()
     },
     async stop () {
-      await DBM.disconnect()
+      await DBM.control.disconnect()
       await API.stop()
     }
   }

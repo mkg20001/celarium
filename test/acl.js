@@ -9,7 +9,7 @@ const parse = require('../src/acl').parse
 
 const {
   generateTests,
-  generateCode
+  generateCode,
 } = require('./util')
 
 describe('access control', () => {
@@ -21,8 +21,8 @@ describe('access control', () => {
           depth: 1,
           mode: 'next',
           name: 'creator',
-          type: 'property'
-        }
+          type: 'property',
+        },
       },
       {
         input: '$$.creator',
@@ -30,9 +30,9 @@ describe('access control', () => {
           depth: 2,
           mode: 'next',
           name: 'creator',
-          type: 'property'
-        }
-      }
+          type: 'property',
+        },
+      },
     ], parse)
 
     it('fails if invalid', async () => {
@@ -48,12 +48,13 @@ describe('access control', () => {
     before(async function () {
       this.timeout(10000)
       generated = await generateCode('node:' + require.resolve('../example'))
-      stubDb = generated.load('db')()
-      acl = generated.load('acl')(stubDb)
+      const ACL = generated.load('acl')
+      stubDb = generated.load('db')({}, ACL)
+      acl = ACL(stubDb)
     })
 
-    it('blink', async () => {
-      console.log(stubDb)
+    describe('board acl', () => {
+
     })
 
     after(async () => {

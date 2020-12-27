@@ -59,20 +59,6 @@ function remap (i, modelName) {
   return o
 }
 
-function unmap (o) {
-  const i = {}
-
-  for (const key in o) {
-    if (key === 'id') {
-      i._id = o.id
-    } else {
-      o[key] = i[key]
-    }
-  }
-
-  return o
-}
-
 module.exports = config => {
   const auditModel = {
     timestamp: { type: Date, required: true },
@@ -97,46 +83,54 @@ module.exports = config => {
     get: async (model, id) => {
       return remap(await wrapRethrow(model.findOne({ _id: id }), model.__name))
     },
-    auditLog: {
-      addEntry: async (user, model, type, object, targetKey, operation, parameter) => {
-        // User added xyz to group n on object (user, model, type=acl, object, targetKey=n, operation=add, parameter=xyz) (type.operation=acl.add)
-        // User remove xyz from list d on object i (user, model, type=modify, object, targetKey=d, operation=listRemove, parameter=xyz) (modify.listRemove)
+    async addAuditEntry (user, model, type, object, targetKey, operation, parameter) {
+      // User added xyz to group n on object (user, model, type=acl, object, targetKey=n, operation=add, parameter=xyz) (type.operation=acl.add)
+      // User remove xyz from list d on object i (user, model, type=modify, object, targetKey=d, operation=listRemove, parameter=xyz) (modify.listRemove)
 
-        const obj = new Audit({
-          timestamp: Date.now(),
-          user,
-          model,
-          type,
-          object,
-          targetKey,
-          operation,
-          parameter
-        })
+      const obj = new Audit({
+        timestamp: Date.now(),
+        user,
+        model,
+        type,
+        object,
+        targetKey,
+        operation,
+        parameter
+      })
 
-        const res = await obj.save()
+      const res = await obj.save()
 
-        return res._id
-      }
+      return res._id
     },
-    async makeElement (Model, contents, creator, parent) {
-      const m = new Model(Object.assign({
-        creator,
-        createdOn: new Date(),
-        acl: {}, // TODO: add initial
-        parent
-      }, contents))
+    async create (Model, contents, creator, parent) {
+      const m = new Model(contents)
 
-      return remap(await wrapRethrow(m.save()))
+      const res = await wrapRethrow(m.save())
+
+      return res._id
     },
-    async set (target, key, value, updater) {
-      const model = await S.getModel(target.model)
+    async set (model, targetId, updateKV) {
       // TODO: use direct queries instead of magic object
-      const self = await model.findOne({ _id: target.id })
-      self.updater = updater
-      self.updatedOn = new Date()
-      self[key] = value
+      const self = await model.findOne({ _id: targetId })
+
+      for (const key in updateKV) { // eslint-disable-line guard-for-in
+        self[key] = updateKV[key]
+      }
 
       return remap(await wrapRethrow(self.save()))
+    },
+    async del (model, id) {
+      // TODO: implement
+    },
+    async query (model, parent, query) {
+      // TODO: add
+      return []
+    },
+    native (model) {
+      return model
+    },
+    fromNative (model, results) {
+      return results.map(remap)
     },
 
     connect: () => {

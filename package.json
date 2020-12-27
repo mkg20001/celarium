@@ -13,11 +13,11 @@
     "src/**/*.js"
   ],
   "bin": {
-    "celarium": "./src/bin.js"
+    "celarium": "src/bin.js"
   },
   "scripts": {
     "start": "nodemon -i out -x \"npm run try | pino-pretty\"",
-    "watch-n-test": "DEBUG=cel* nodemon -i out -x \"npm test\"",
+    "watch-n-test": "DEBUG=cel* nodemon -i out -x \"npm test -- -c | pino-pretty\"",
     "test": "mocha -A",
     "prep": "sh -c 'if [ ! -e node_modules/celarium ]; then ln -sf .. node_modules/celarium; fi'",
     "example": "node src/bin.js node:$PWD/example.js $PWD/out",
@@ -44,23 +44,31 @@
   },
   "homepage": "https://github.com/mkg20001/celarium#readme",
   "dependencies": {
+    "@hapi/boom": "^9.1.0",
     "@hapi/joi": "^17.1.1",
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "fake-joi": "^0.1.0",
-    "joi": "^17.1.1",
+    "joi": "^17.3.0",
     "mkdirp": "^1.0.4",
     "rimraf": "^3.0.2"
   },
   "devDependencies": {
-    "@hapi/hapi": "^19.2.0",
+    "@hapi/hapi": "^20.0.3",
     "eslint": "*",
     "eslint-config-aegir-standalone": "*",
+    "eslint-config-ipfs": "*",
     "eslint-config-oclif": "*",
-    "hapi-pino": "^8.0.1",
-    "mkgs-tool": "^0.1.10",
+    "hapi-pino": "^8.3.0",
+    "mkgs-tool": "^0.1.14",
     "mocha": "*",
-    "mongoose": "^5.9.27",
-    "node-fetch": "^2.6.0",
-    "nyc": "*"
+    "mongoose": "^5.11.8",
+    "node-fetch": "^2.6.1",
+    "nyc": "*",
+    "pino-pretty": "^4.3.0",
+    "whatwg-fetch": "^3.5.0"
+  },
+  "engines": {
+    "node": ">=10.0.0"
   }
 }

@@ -1,6 +1,6 @@
 'use strict'
 
-const { L, Joi } = require('../utils')
+const { L } = require('../utils')
 const FJoi = require('fake-joi')
 
 module.exports = {

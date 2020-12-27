@@ -42,11 +42,12 @@ module.exports = models => {
   return L(`'use strict'
 
 const ABS = require('celarium/src/abstract/mongoose')
+const WRAP = require('celarium/src/abstract/database')
 const mongoose = require('mongoose')
 
-module.exports = (dbConfig) => {
+module.exports = (dbConfig, ACL) => {
   ${S(mModels)}
 
-  return ABS(dbConfig)
+  return WRAP(ABS(dbConfig), ACL)
 }`)
 }

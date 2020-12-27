@@ -8,8 +8,12 @@ module.exports = {
     literalParameters: params => {
       const out = { type: L('String'), required: params.required || false }
 
-      if (params.minLength) { out.minLength = params.minLength }
-      if (params.maxLength) { out.maxLength = params.maxLength }
+      if (params.minLength) {
+        out.minLength = params.minLength
+      }
+      if (params.maxLength) {
+        out.maxLength = params.maxLength
+      }
 
       return out
     }

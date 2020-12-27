@@ -25,5 +25,11 @@ module.exports = {
     Object.keys(obj).forEach(key => (out.push(fnc(key, obj[key], obj))))
     return { _literal: true, _value: out.map(v => v._literal ? v._value : stringify(v)).join('\n') }
   },
-  Joi
+  Joi,
+  C (str) {
+    return str.charAt(0).toUpperCase() + str.slice(1)
+  },
+  pad (str, numTabs) {
+    return '  '.repeat(numTabs) + str
+  }
 }

@@ -37,7 +37,7 @@ async function resolveAclRef (aclBase, { wildcard, not, mode, depth, type, name 
 
   switch (mode) {
     case 'prev': {
-      // go back in stack by $depth
+    // go back in stack by $depth
 
       targetObj = await stack.fetch(depth)
       newStack = stack.dive(depth)
@@ -45,12 +45,12 @@ async function resolveAclRef (aclBase, { wildcard, not, mode, depth, type, name 
     }
     case 'next': {
       if (depth === 2) {
-        // list object current object (used in remove clause of list)
-        // targetObj = stack[0]
-        // throw new Error('unimp')
+      // list object current object (used in remove clause of list)
+      // targetObj = stack[0]
+      // throw new Error('unimp')
         targetObj = await stack.fetch(-1)
       } else if (depth === 1) {
-        // self (our property)
+      // self (our property)
         targetObj = await stack.fetch(0) // isList ? stack[1] : stack[0]
       } else {
         throw new TypeError(depth)
