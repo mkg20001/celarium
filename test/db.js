@@ -1,15 +1,14 @@
-'use strict'
-
 /* eslint-env mocha */
 /* eslint-disable require-atomic-updates */
+'use strict'
 
 const chai = require('chai')
 chai.use(require('chai-as-promised'))
 const expect = chai.expect
 
 const {
-  generateTests,
-  generateCode,
+  // generateTests, // TODO: find use
+  generateCode
 } = require('./util')
 
 describe('db', () => {
@@ -25,9 +24,9 @@ describe('db', () => {
     })
 
     it('board create', async () => {
-      el = await stubDb.db.create('board', { // eslint-disable-line
+      el = await stubDb.db.create('board', {
         name: 'Test',
-        description: 'test',
+        description: 'test'
       })
 
       expect(el).to.have.property('name').that.is.equal('Test')
@@ -40,7 +39,7 @@ describe('db', () => {
     })
 
     it('board update', async () => {
-      await stubDb.db.setById('board', el.id, {name: 'TheTest'})
+      await stubDb.db.setById('board', el.id, { name: 'TheTest' })
 
       el = await stubDb.db.getById('board', el.id)
 
@@ -62,7 +61,7 @@ describe('db', () => {
     })
 
     after(async () => {
-      generated.cleanup()
+      await generated.cleanup()
     })
   })
 })

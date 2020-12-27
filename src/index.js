@@ -14,6 +14,7 @@ module.exports = async (src, outFolder, config = { api: 'hapi', db: 'mongoose', 
     acl: require('./render/acl'),
     db: require('./render/' + config.db),
     api: require('./render/' + config.api),
+    jsapi: require('./render/jsapi'),
     base: require('./render/base'),
     client: require('./render/client'),
     joi: require('./render/joi')
