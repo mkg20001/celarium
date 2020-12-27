@@ -29,11 +29,7 @@ module.exports = {
   C (str) {
     return str.charAt(0).toUpperCase() + str.slice(1)
   },
-  Pad (str, numTabs) {
-    let ret = str
-    for (let i = 0; i < numTabs; i++) {
-      ret = '  ' + ret
-    }
-    return ret
+  pad (str, numTabs) {
+    return '  '.repeat(numTabs) + str
   }
 }

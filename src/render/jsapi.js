@@ -30,8 +30,7 @@ module.exports = (config, DBM) => {
   const { validateAcls } = DBM
   const accessLog = false
   return {
-${S(routes).slice(0, -1) // slice to remove the last ","
-  }
+${S(routes).slice(0, -1)}
   }
 }
 `)

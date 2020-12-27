@@ -1,7 +1,7 @@
 /* eslint-disable max-params */
 'use strict'
 
-const { L, S, Joi, iterateKeysToArstr, C, Pad } = require('../utils') // eslint-disable-line no-unused-vars
+const { L, S, Joi, iterateKeysToArstr, C, pad } = require('../utils') // eslint-disable-line no-unused-vars
 
 // const Stack = require('celarium/src/acl/stack')
 
@@ -24,13 +24,13 @@ module.exports = (models, config) => {
     }
 
     const getRoute = (path, handler, options) => {
-      return route("'GET'", path, handler, options)
+      return route(S('GET'), path, handler, options)
     }
     const patchRoute = (path, handler, options) => {
-      return route("'PATCH'", path, handler, options)
+      return route(S('PATCH'), path, handler, options)
     }
     const postRoute = (path, handler, options) => {
-      return route("'POST'", path, handler, options)
+      return route(S('POST'), path, handler, options)
     }
 
     const handlerBoiler = code => {
@@ -55,30 +55,30 @@ module.exports = (models, config) => {
 
     const logAccess = (model, key, type, op, param, depth = 0) => {
       return `if (accessLog) {
-${Pad('', depth + 1)}// await DBM.auditLog.addEntry(getUser(h), '${model}', '${type}', h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
-${Pad('', depth + 1)}await DBM.auditLog.addEntry(getUser(h), '${model}', '${type}', h.params.id, ${key}, '${op}', ${param}) // (user, model, type, object, targetKey, operation, parameter)
-${Pad('', depth)}}`
+${pad('', depth + 1)}// await DBM.auditLog.addEntry(getUser(h), '${model}', '${type}', h.params.id, "*", null, null) // (user, model, type, object, targetKey, operation, parameter)
+${pad('', depth + 1)}await DBM.auditLog.addEntry(getUser(h), '${model}', '${type}', h.params.id, ${key}, '${op}', ${param}) // (user, model, type, object, targetKey, operation, parameter)
+${pad('', depth)}}`
     }
 
     const validateObjKey = (model, key, type, action, depth = 0, obj = 'obj') => {
       return `// (obj, user, modelName, model, attrName, action, listAction, listNextId)
-${Pad('', depth)}if (!await validateAcls(${obj}, getUser(h), '${model}', ${key}, '${type}')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
-${Pad('', depth + 1)}${action}
-${Pad('', depth)}}`
+${pad('', depth)}if (!await validateAcls(${obj}, getUser(h), '${model}', ${key}, '${type}')) { // obj, modelName, model, attrName, action?, listAction?, listNextId?
+${pad('', depth + 1)}${action}
+${pad('', depth)}}`
     }
 
     const validateObjKeys = (model, type, depth = 0) => {
       return `for (const key in obj) {
-${Pad('', depth + 1)}${validateObjKey(model, 'key', type, 'delete obj[key]', depth + 1)} else ${logAccess(model, 'key', type, 'null?', "'null?'", depth + 1)}
-${Pad('', depth)}}`
+${pad('', depth + 1)}${validateObjKey(model, 'key', type, 'delete obj[key]', depth + 1)} else ${logAccess(model, 'key', type, 'null?', "'null?'", depth + 1)}
+${pad('', depth)}}`
     }
 
     const getPayload = 'const { payload } = h'
 
     const validatePayload = (model, type, depth = 0) => {
       return `for (const key in payload) {
-${Pad('', depth + 1)}${validateObjKey(model, 'key', type, 'throw Boom.unauthorized(\'Not authorised for key \' + JSON.stringify(key))', depth + 1)}
-${Pad('', depth)}}`
+${pad('', depth + 1)}${validateObjKey(model, 'key', type, 'throw Boom.unauthorized(\'Not authorised for key \' + JSON.stringify(key))', depth + 1)}
+${pad('', depth)}}`
     }
 
     const modelGetRoute = model => {
